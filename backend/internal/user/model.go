@@ -12,5 +12,5 @@ type User struct {
 	Username     string
 	PasswordHash string
 	CreatedAt    time.Time
-	active       bool
+	Active       bool
 }
