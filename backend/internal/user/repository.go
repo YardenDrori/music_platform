@@ -35,7 +35,7 @@ func (r *postgresRepository) Create(ctx context.Context, u *User) error {
 			password_hash, created_at, is_active)
 			VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
 		u.ID, u.Email, u.Username, u.FirstName, u.LastName,
-		u.PasswordHash, u.CreatedAt, true,
+		u.PasswordHash, u.CreatedAt, u.Active,
 	)
 
 	if err == nil {
@@ -56,12 +56,25 @@ func (r *postgresRepository) Update(ctx context.Context, u *User) error {
 		password_hash = $5, is_active = $6 WHERE id = $7`,
 		u.Email, u.Username, u.FirstName, u.LastName, u.PasswordHash, u.Active, u.ID,
 	)
-	return err
+
+	if err == nil {
+		return nil
+	}
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+		if pgErr.Code == "23505" {
+			return ErrConflict
+		}
+	}
+
+	return fmt.Errorf("updating user: %w", err)
 }
 
 func (r *postgresRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	_, err := r.db.Exec(ctx, `DELETE FROM users WHERE id = $1`, id)
-	return err
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("deleting user: %w", err)
 }
 
 func (r *postgresRepository) FindByEmail(ctx context.Context, email string) (*User, error) {
