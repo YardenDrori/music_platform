@@ -3,9 +3,11 @@ package user
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -35,7 +37,17 @@ func (r *postgresRepository) Create(ctx context.Context, u *User) error {
 		u.ID, u.Email, u.Username, u.FirstName, u.LastName,
 		u.PasswordHash, u.CreatedAt, true,
 	)
-	return err
+
+	if err == nil {
+		return nil
+	}
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+		if pgErr.Code == "23505" {
+			return ErrConflict
+		}
+	}
+
+	return fmt.Errorf("creating new user in postgres db: %w", err)
 }
 
 func (r *postgresRepository) Update(ctx context.Context, u *User) error {
@@ -62,8 +74,12 @@ func (r *postgresRepository) FindByEmail(ctx context.Context, email string) (*Us
 		&u.PasswordHash, &u.CreatedAt, &u.Active)
 
 	if err != nil {
-		return nil, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("finding user by email: %w", err)
 	}
+
 	return u, nil
 }
 
@@ -77,8 +93,12 @@ func (r *postgresRepository) FindByID(ctx context.Context, id uuid.UUID) (*User,
 		&u.PasswordHash, &u.CreatedAt, &u.Active)
 
 	if err != nil {
-		return nil, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("finding user by uuid: %w", err)
 	}
+
 	return u, nil
 }
 
@@ -92,7 +112,11 @@ func (r *postgresRepository) FindByUsername(ctx context.Context, username string
 		&u.PasswordHash, &u.CreatedAt, &u.Active)
 
 	if err != nil {
-		return nil, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("finding user by username: %w", err)
 	}
+
 	return u, nil
 }
