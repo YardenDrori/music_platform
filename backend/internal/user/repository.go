@@ -9,7 +9,7 @@ import (
 
 type Repository interface {
 	Create(ctx context.Context, u *User) error
-	Alter(ctx context.Context, u *User) error
+	Update(ctx context.Context, u *User) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	FindByEmail(ctx context.Context, e string) (*User, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*User, error)
@@ -33,7 +33,7 @@ func (r *postgresRepository) Create(ctx context.Context, u *User) error {
 	)
 	return err
 }
-func (r *postgresRepository) Alter(ctx context.Context, u *User) error {
+func (r *postgresRepository) Update(ctx context.Context, u *User) error {
 	_, err := r.db.Exec(ctx,
 		`UPDATE users SET email = $1, username = $2, password_hash = $3, is_active = $4 WHERE id = $5`,
 		u.Email, u.Username, u.PasswordHash, u.Active, u.ID,
