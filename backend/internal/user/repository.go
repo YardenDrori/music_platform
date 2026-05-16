@@ -2,8 +2,10 @@ package user
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -26,17 +28,21 @@ func NewRepository(db *pgxpool.Pool) Repository {
 
 func (r *postgresRepository) Create(ctx context.Context, u *User) error {
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO users (id, email, username, 
-		 password_hash, created_at, is_active)
-	   VALUES($1, $2, $3, $4, $5, $6)`,
-		u.ID, u.Email, u.Username, u.PasswordHash, u.CreatedAt, true,
+		`INSERT INTO users (id, email, username,
+			first_name, last_name,
+			password_hash, created_at, is_active)
+			VALUES($1, $2, $3, $4, $5, $6, $7, $8)`,
+		u.ID, u.Email, u.Username, u.FirstName, u.LastName,
+		u.PasswordHash, u.CreatedAt, true,
 	)
 	return err
 }
+
 func (r *postgresRepository) Update(ctx context.Context, u *User) error {
 	_, err := r.db.Exec(ctx,
-		`UPDATE users SET email = $1, username = $2, password_hash = $3, is_active = $4 WHERE id = $5`,
-		u.Email, u.Username, u.PasswordHash, u.Active, u.ID,
+		`UPDATE users SET email = $1, username = $2, first_name = $3, last_name = $4,
+		password_hash = $5, is_active = $6 WHERE id = $7`,
+		u.Email, u.Username, u.FirstName, u.LastName, u.PasswordHash, u.Active, u.ID,
 	)
 	return err
 }
@@ -49,9 +55,12 @@ func (r *postgresRepository) Delete(ctx context.Context, id uuid.UUID) error {
 func (r *postgresRepository) FindByEmail(ctx context.Context, email string) (*User, error) {
 	u := &User{}
 	err := r.db.QueryRow(ctx,
-		`SELECT id, email, username, password_hash, created_at, is_active FROM users WHERE email = $1`,
+		`SELECT id, email, username, first_name, last_name, 
+		password_hash, created_at, is_active FROM users WHERE email = $1`,
 		email,
-	).Scan(&u.ID, &u.Email, &u.Username, &u.PasswordHash, &u.CreatedAt, &u.Active)
+	).Scan(&u.ID, &u.Email, &u.Username, &u.FirstName, &u.LastName,
+		&u.PasswordHash, &u.CreatedAt, &u.Active)
+
 	if err != nil {
 		return nil, err
 	}
@@ -61,9 +70,12 @@ func (r *postgresRepository) FindByEmail(ctx context.Context, email string) (*Us
 func (r *postgresRepository) FindByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	u := &User{}
 	err := r.db.QueryRow(ctx,
-		`SELECT id, email, username, password_hash, created_at, is_active FROM users WHERE id = $1`,
+		`SELECT id, email, username, first_name, last_name,
+		password_hash, created_at, is_active FROM users WHERE id = $1`,
 		id,
-	).Scan(&u.ID, &u.Email, &u.Username, &u.PasswordHash, &u.CreatedAt, &u.Active)
+	).Scan(&u.ID, &u.Email, &u.Username, &u.FirstName, &u.LastName,
+		&u.PasswordHash, &u.CreatedAt, &u.Active)
+
 	if err != nil {
 		return nil, err
 	}
@@ -73,9 +85,12 @@ func (r *postgresRepository) FindByID(ctx context.Context, id uuid.UUID) (*User,
 func (r *postgresRepository) FindByUsername(ctx context.Context, username string) (*User, error) {
 	u := &User{}
 	err := r.db.QueryRow(ctx,
-		`SELECT id, email, username, password_hash, created_at, is_active FROM users WHERE username = $1`,
+		`SELECT id, email, username, first_name, last_name,
+		password_hash, created_at, is_active FROM users WHERE username = $1`,
 		username,
-	).Scan(&u.ID, &u.Email, &u.Username, &u.PasswordHash, &u.CreatedAt, &u.Active)
+	).Scan(&u.ID, &u.Email, &u.Username, &u.FirstName, &u.LastName,
+		&u.PasswordHash, &u.CreatedAt, &u.Active)
+
 	if err != nil {
 		return nil, err
 	}
