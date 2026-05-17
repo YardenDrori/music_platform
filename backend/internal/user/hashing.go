@@ -51,3 +51,66 @@ func (h *argon2idPasswordHasher) hashPassword(password string) string {
 		base64Hash,
 	)
 }
+
+func (h *argon2idPasswordHasher) verifyPassword(
+	password string,
+	hashedPassword string,
+) (bool, error) {
+
+	//extracting settings
+	//settings appear as follow
+	//$argon2id$v=19$m=65536,t=1,p=4$<salt>$<hash>
+	parts := strings.Split(hashedPassword, "$")
+	if len(parts) != 6 {
+		return false, fmt.Errorf("verifying password hash: invalid format")
+	}
+
+	algo := parts[1]
+	if algo != "argon2id" {
+		return false, fmt.Errorf("verifying password hash: method incompatible with hash")
+	}
+	version := parts[2]
+	if version != "v=19" {
+		return false, fmt.Errorf(
+			"verifying password hash: argon2id version mismatch expected v=19, found %v",
+			version,
+		)
+	}
+
+	settings := strings.Split(parts[3], ",")
+	if len(settings) != 3 {
+		return false, fmt.Errorf("verifying password hash: invalid settings format")
+	}
+	memory, errMemory := strconv.ParseUint(settings[0][2:], 10, 32)
+	if errMemory != nil {
+		return false, fmt.Errorf("converting hash setting memory from strings: %w", errMemory)
+	}
+	time, errTime := strconv.ParseUint(settings[1][2:], 10, 32)
+	if errTime != nil {
+		return false, fmt.Errorf("converting hash setting time from strings: %w", errTime)
+	}
+	threads, errThreads := strconv.ParseUint(settings[2][2:], 10, 32)
+	if errThreads != nil {
+		return false, fmt.Errorf("converting hash setting threads from strings: %w", errThreads)
+	}
+
+	salt := parts[4]
+
+	hash := parts[5]
+	hashLen := base64.RawStdEncoding.DecodedLen(len(hash))
+
+	rawHash := argon2.IDKey(
+		[]byte(password),
+		[]byte(salt),
+		uint32(time),
+		uint32(memory),
+		uint8(threads),
+		uint32(hashLen),
+	)
+	base64Hash := base64.RawStdEncoding.EncodeToString(rawHash)
+
+	if subtle.ConstantTimeCompare([]byte(base64Hash), []byte(hash)) == 1 {
+		return true, nil
+	}
+	return false, nil
+}
