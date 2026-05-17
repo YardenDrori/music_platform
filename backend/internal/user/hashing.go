@@ -26,3 +26,28 @@ type passwordHasher interface {
 }
 
 type argon2idPasswordHasher struct{}
+
+func (h *argon2idPasswordHasher) hashPassword(password string) string {
+	salt := rand.Text() //returns 26 runes
+	for utf8.RuneCount([]byte(salt)) < argonSaltLen {
+		addedSalt := rand.Text()
+		salt += addedSalt
+	}
+
+	rawHash := argon2.IDKey(
+		[]byte(password),
+		[]byte(salt)[:argonSaltLen],
+		argonTime,
+		argonMemory,
+		argonThreads,
+		argonKeyLen,
+	)
+	base64Hash := base64.RawStdEncoding.EncodeToString(rawHash)
+
+	return fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s",
+		argon2.Version,
+		argonMemory, argonTime, argonThreads,
+		salt[:argonSaltLen],
+		base64Hash,
+	)
+}
