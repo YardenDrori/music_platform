@@ -10,9 +10,10 @@ type AuthService interface {
 }
 
 type userService struct {
-	repo Repository
+	repo   Repository
+	hasher passwordHasher
 }
 
 func NewService(repo Repository) AuthService {
-	return &userService{repo: repo}
+	return &userService{repo: repo, hasher: &argon2idPasswordHasher{}}
 }
