@@ -75,5 +75,29 @@ func (s *userService) Register(ctx context.Context, req *RegisterRequest) (*User
 }
 
 func (s *userService) Login(ctx context.Context, req *LoginRequest) (*User, error) {
-	panic("")
+	var user *User
+	var err error
+	switch {
+	case req.Email != nil && *req.Email != "":
+		user, err = s.repo.FindByEmail(ctx, *req.Email)
+	case req.UserName != nil && *req.UserName != "":
+		user, err = s.repo.FindByUsername(ctx, *req.UserName)
+	default:
+		return nil, &ErrBadRequest{Message: "missing credentials"}
+	}
+	if errors.Is(err, ErrNotFound) {
+		return nil, ErrUnauthorized
+	}
+	if err != nil {
+		return nil, fmt.Errorf("logging in: %w", err)
+	}
+
+	ok, err := s.hasher.verifyPassword(req.Password, user.PasswordHash)
+	if err != nil {
+		return nil, fmt.Errorf("verifying password: %w", err)
+	}
+	if !ok {
+		return nil, ErrUnauthorized
+	}
+	//add refresh + jwt here
 }
