@@ -74,7 +74,7 @@ func (s *userService) Register(ctx context.Context, req *RegisterRequest) (*User
 	}
 }
 
-func (s *userService) Login(ctx context.Context, req *LoginRequest) (*User, error) {
+func (s *userService) Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error) {
 	var user *User
 	var err error
 	switch {
@@ -99,5 +99,12 @@ func (s *userService) Login(ctx context.Context, req *LoginRequest) (*User, erro
 	if !ok {
 		return nil, ErrUnauthorized
 	}
-	//add refresh + jwt here
+
+
+
+	respones := LoginResponse{
+		User: user,
+		RefreshToken: ,
+		AccessToken: ,
+	}
 }
