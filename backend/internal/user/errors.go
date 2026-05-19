@@ -10,6 +10,8 @@ var ErrConflict = errors.New("conflict")
 
 var ErrUnauthorized = errors.New("incorrect username or password")
 
+var ErrExpiredToken = errors.New("token expired")
+
 type ErrBadRequest struct {
 	Message string
 }
