@@ -29,7 +29,7 @@ type passwordHasher interface {
 
 type tokenHasher interface {
 	hashToken(token string) string
-	verifyToken(token string, hashedToken string) bool
+	// verifyToken(token string, hashedToken string) bool
 }
 
 type sha256TokenHasher struct{}
