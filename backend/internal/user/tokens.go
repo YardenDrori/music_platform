@@ -16,6 +16,7 @@ type Claims struct {
 
 type Tokenizer interface {
 	ValidateAccessToken(ctx context.Context, token string) (*Claims, error)
+	generateTokenPair(ctx context.Context, user *User) (string, string, error)
 }
 
 type JWTTokenizerHS256 struct {
