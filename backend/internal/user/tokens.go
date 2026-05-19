@@ -23,7 +23,7 @@ type Claims struct {
 
 type Tokenizer interface {
 	ValidateAccessToken(ctx context.Context, token string) (*Claims, error)
-	generateTokenPair(user *User) (*tokenPair, error)
+	GenerateTokenPair(user *User) (*tokenPair, error)
 }
 
 type JWTTokenizerHS256 struct {
@@ -69,7 +69,7 @@ func (t *JWTTokenizerHS256) newAccess(
 	return &finalizedToken, nil
 }
 
-func (t *JWTTokenizerHS256) generateTokenPair(
+func (t *JWTTokenizerHS256) GenerateTokenPair(
 	user *User,
 ) (*tokenPair, error) {
 	accessToken, err := t.newAccess(user)
@@ -85,6 +85,7 @@ func (t *JWTTokenizerHS256) generateTokenPair(
 		accessToken:        *accessToken,
 		rawRefreshToken:    rawRefreshToken,
 		hashedRefreshToken: hashedRefreshToken,
+		refreshDur:         t.refreshTokenDurSec,
 	}, nil
 }
 
