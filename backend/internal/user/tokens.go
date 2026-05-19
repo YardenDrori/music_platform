@@ -10,13 +10,20 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type tokenPair struct {
+	accessToken        string
+	rawRefreshToken    string
+	hashedRefreshToken string
+	refreshDur         time.Duration
+}
+
 type Claims struct {
 	jwt.RegisteredClaims
 }
 
 type Tokenizer interface {
 	ValidateAccessToken(ctx context.Context, token string) (*Claims, error)
-	generateTokenPair(ctx context.Context, user *User) (string, string, error)
+	generateTokenPair(user *User) (*tokenPair, error)
 }
 
 type JWTTokenizerHS256 struct {
@@ -66,17 +73,21 @@ func (t *JWTTokenizerHS256) newAccess(
 func (t *JWTTokenizerHS256) generateTokenPair(
 	ctx context.Context,
 	user *User,
-) (string, string, error) {
-	accessToken, err := t.newAccess(ctx, user)
+) (*tokenPair, error) {
+	accessToken, err := t.newAccess(user)
 	if err != nil {
-		return "", "", fmt.Errorf("generating token pair: %w", err)
+		return nil, fmt.Errorf("generating token pair: %w", err)
 	}
 
 	randString := rand.Text() + rand.Text()
 	rawRefreshToken := randString[:32]
 	hashedRefreshToken := t.hasher.hashToken(rawRefreshToken)
 
-	return *accessToken, hashedRefreshToken, nil
+	return &tokenPair{
+		accessToken:        *accessToken,
+		rawRefreshToken:    rawRefreshToken,
+		hashedRefreshToken: hashedRefreshToken,
+	}, nil
 }
 
 func (t *JWTTokenizerHS256) ValidateAccessToken(
