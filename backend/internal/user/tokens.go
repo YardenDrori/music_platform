@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"crypto/rand"
+	"errors"
 	"fmt"
 	"time"
 
@@ -13,24 +15,27 @@ type Claims struct {
 }
 
 type Tokenizer interface {
-	ValidateAccessToken(ctx context.Context, token string) (Claims, error)
+	ValidateAccessToken(ctx context.Context, token string) (*Claims, error)
 }
 
 type JWTTokenizerHS256 struct {
 	signingKey         []byte
 	accessTokenDurSex  time.Duration
 	refreshTokenDurSec time.Duration
+	hasher             tokenHasher
 }
 
 func NewJwtTokenizer(
 	signingkey []byte,
 	accessTokenDurSex time.Duration,
 	refreshTokenDurSec time.Duration,
+	tokenHasher tokenHasher,
 ) Tokenizer {
 	return &JWTTokenizerHS256{
 		signingKey:         signingkey,
 		accessTokenDurSex:  accessTokenDurSex,
 		refreshTokenDurSec: refreshTokenDurSec,
+		hasher:             tokenHasher,
 	}
 }
 
