@@ -100,11 +100,24 @@ func (s *userService) Login(ctx context.Context, req *LoginRequest) (*LoginRespo
 		return nil, ErrUnauthorized
 	}
 
-
-
-	respones := LoginResponse{
-		User: user,
-		RefreshToken: ,
-		AccessToken: ,
+	//authorized - making tokens
+	tokens, err := s.tokenizer.generateTokenPair(user)
+	if err != nil {
+		return nil, fmt.Errorf("logging in: %w", err)
 	}
+
+	err = s.repo.NewToken(
+		ctx,
+		user.ID,
+		tokens.hashedRefreshToken,
+		time.Now().UTC(),
+		time.Now().UTC().Add(tokens.refreshDur),
+	)
+
+	return &LoginResponse{
+		User:         user,
+		AccessToken:  tokens.accessToken,
+		RefreshToken: tokens.rawRefreshToken,
+	}, nil
+
 }
