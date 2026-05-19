@@ -123,3 +123,9 @@ func (h *argon2idPasswordHasher) verifyPassword(
 	}
 	return false, nil
 }
+
+func (h *sha256TokenHasher) hashToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	tokenHash := hex.EncodeToString(hash[:])
+	return tokenHash
+}
