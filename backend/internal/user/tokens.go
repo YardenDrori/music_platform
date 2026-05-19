@@ -66,9 +66,38 @@ func (t *JWTTokenizerHS256) generateTokenPair(
 	ctx context.Context,
 	user *User,
 ) (string, string, error) {
-	panic("")
+	accessToken, err := t.newAccess(ctx, user)
+	if err != nil {
+		return "", "", fmt.Errorf("generating token pair: %w", err)
+	}
+
+	randString := rand.Text() + rand.Text()
+	rawRefreshToken := randString[:32]
+	hashedRefreshToken := t.hasher.hashToken(rawRefreshToken)
+
+	return *accessToken, hashedRefreshToken, nil
 }
 
-func (t *JWTTokenizerHS256) ValidateAccessToken(ctx context.Context, token string) (Claims, error) {
-	panic("")
+func (t *JWTTokenizerHS256) ValidateAccessToken(
+	ctx context.Context,
+	token string,
+) (*Claims, error) {
+	claims := &Claims{}
+
+	_, err := jwt.ParseWithClaims(token, claims,
+		func(tok *jwt.Token) (any, error) {
+			if tok.Method != jwt.SigningMethodHS256 {
+				return nil, fmt.Errorf("invalid signing method")
+			}
+			return t.signingKey, nil
+		})
+
+	switch {
+	case err == nil:
+		return claims, nil
+	case errors.Is(err, jwt.ErrTokenExpired):
+		return nil, ErrExpiredToken
+	default:
+		return nil, fmt.Errorf("validating token: %w", err)
+	}
 }
