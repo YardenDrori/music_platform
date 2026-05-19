@@ -48,7 +48,6 @@ func NewJwtTokenizer(
 }
 
 func (t *JWTTokenizerHS256) newAccess(
-	ctx context.Context,
 	user *User,
 ) (*string, error) {
 	expTime := time.Now().UTC().Add(t.accessTokenDurSex)
@@ -71,7 +70,6 @@ func (t *JWTTokenizerHS256) newAccess(
 }
 
 func (t *JWTTokenizerHS256) generateTokenPair(
-	ctx context.Context,
 	user *User,
 ) (*tokenPair, error) {
 	accessToken, err := t.newAccess(user)
