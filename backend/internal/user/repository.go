@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -12,12 +13,25 @@ import (
 )
 
 type Repository interface {
+	//account actions
 	Create(ctx context.Context, u *User) error
 	Update(ctx context.Context, u *User) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	FindByEmail(ctx context.Context, e string) (*User, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*User, error)
 	FindByUsername(ctx context.Context, u string) (*User, error)
+
+	//token actions
+	NewToken(
+		ctx context.Context,
+		id uuid.UUID,
+		tokenHash string,
+		iat time.Time,
+		exp time.Time,
+	) error
+	DeleteToken(ctx context.Context, id uuid.UUID, tokenHash string) error
+	FindToken(ctx context.Context, id uuid.UUID, tokenHash string) (bool, error)
+	CleanExpiredTokens(ctx context.Context) error
 }
 
 type postgresRepository struct {
@@ -28,6 +42,7 @@ func NewRepository(db *pgxpool.Pool) Repository {
 	return &postgresRepository{db: db}
 }
 
+// ==========ACCOUNTS==========
 func (r *postgresRepository) Create(ctx context.Context, u *User) error {
 	_, err := r.db.Exec(ctx,
 		`INSERT INTO users (id, email, username,
@@ -132,4 +147,71 @@ func (r *postgresRepository) FindByUsername(ctx context.Context, username string
 	}
 
 	return u, nil
+}
+
+// ==========TOKENS==========
+func (r *postgresRepository) NewToken(
+	ctx context.Context,
+	id uuid.UUID,
+	tokenHash string,
+	iat time.Time,
+	exp time.Time,
+) error {
+	_, err := r.db.Exec(ctx,
+		`INSERT INTO tokens (id, issued_at, expires_at, user_id, token_hash)
+	VALUES($1, $2, $3, $4, $5)
+	`, uuid.New(), iat, exp, id, tokenHash,
+	)
+
+	if err == nil {
+		return nil
+	}
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+		if pgErr.Code == "23505" {
+			return ErrConflict
+		}
+	}
+	return fmt.Errorf("creating token user in postgres db: %w", err)
+}
+
+func (r *postgresRepository) FindToken(
+	ctx context.Context,
+	id uuid.UUID,
+	tokenHash string,
+) (bool, error) {
+	var dummy int
+	err := r.db.QueryRow(ctx,
+		`SELECT 1 FROM tokens WHERE token_hash = $1 AND user_id = $2 AND expires_at > NOW()
+	`, tokenHash, id).Scan(&dummy)
+
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+	return false, fmt.Errorf("verifying token against db: %w", err)
+}
+
+func (r *postgresRepository) DeleteToken(
+	ctx context.Context,
+	id uuid.UUID,
+	tokenHash string,
+) error {
+	_, err := r.db.Exec(ctx,
+		`DELETE FROM tokens WHERE user_id = $1 AND token_hash = $2
+`, id, tokenHash)
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("deleting token: %w", err)
+}
+
+func (r *postgresRepository) CleanExpiredTokens(ctx context.Context) error {
+	_, err := r.db.Exec(ctx, `
+	DELETE FROM tokens WHERE expires_at < NOW()`)
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("cleaning expired tokens: %w", err)
 }
