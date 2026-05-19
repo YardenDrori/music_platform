@@ -27,6 +27,13 @@ type passwordHasher interface {
 	verifyPassword(password string, hashedPassword string) (bool, error)
 }
 
+type tokenHasher interface {
+	hashToken(token string) string
+	verifyToken(token string, hashedToken string) bool
+}
+
+type sha256TokenHasher struct{}
+
 type argon2idPasswordHasher struct{}
 
 func (h *argon2idPasswordHasher) hashPassword(password string) string {
