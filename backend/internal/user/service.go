@@ -6,14 +6,19 @@ import (
 
 type AuthService interface {
 	Register(ctx context.Context, req *RegisterRequest) (*User, error)
-	Login(ctx context.Context, req *LoginRequest) (*User, error)
+	Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error)
 }
 
 type userService struct {
-	repo   Repository
-	hasher passwordHasher
+	repo      Repository
+	hasher    passwordHasher
+	tokenizer Tokenizer
 }
 
-func NewService(repo Repository) AuthService {
-	return &userService{repo: repo, hasher: &argon2idPasswordHasher{}}
+func NewService(repo Repository, tokenizer Tokenizer) AuthService {
+	return &userService{
+		repo:      repo,
+		hasher:    &argon2idPasswordHasher{},
+		tokenizer: tokenizer,
+	}
 }
