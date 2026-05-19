@@ -30,7 +30,7 @@ type Repository interface {
 		exp time.Time,
 	) error
 	DeleteToken(ctx context.Context, id uuid.UUID, tokenHash string) error
-	FindToken(ctx context.Context, id uuid.UUID, tokenHash string) (bool, error)
+	FindToken(ctx context.Context, tokenHash string) (*uuid.UUID, error)
 	CleanExpiredTokens(ctx context.Context) error
 }
 
@@ -176,21 +176,20 @@ func (r *postgresRepository) NewToken(
 
 func (r *postgresRepository) FindToken(
 	ctx context.Context,
-	id uuid.UUID,
 	tokenHash string,
-) (bool, error) {
-	var dummy int
+) (*uuid.UUID, error) {
+	var owner uuid.UUID
 	err := r.db.QueryRow(ctx,
-		`SELECT 1 FROM tokens WHERE token_hash = $1 AND user_id = $2 AND expires_at > NOW()
-	`, tokenHash, id).Scan(&dummy)
+		`SELECT user_id FROM tokens WHERE token_hash = $1 AND expires_at > NOW()
+	`, tokenHash).Scan(&owner)
 
 	if err == nil {
-		return true, nil
+		return &owner, nil
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
-		return false, nil
+		return nil, ErrNotFound
 	}
-	return false, fmt.Errorf("verifying token against db: %w", err)
+	return nil, fmt.Errorf("verifying token against db: %w", err)
 }
 
 func (r *postgresRepository) DeleteToken(
