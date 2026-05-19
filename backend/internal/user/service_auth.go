@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -101,18 +102,27 @@ func (s *userService) Login(ctx context.Context, req *LoginRequest) (*LoginRespo
 	}
 
 	//authorized - making tokens
-	tokens, err := s.tokenizer.generateTokenPair(user)
+	tokens, err := s.tokenizer.GenerateTokenPair(user)
 	if err != nil {
 		return nil, fmt.Errorf("logging in: %w", err)
 	}
 
-	err = s.repo.NewToken(
-		ctx,
-		user.ID,
-		tokens.hashedRefreshToken,
-		time.Now().UTC(),
-		time.Now().UTC().Add(tokens.refreshDur),
-	)
+	for range 3 {
+		err = s.repo.NewToken(
+			ctx,
+			user.ID,
+			tokens.hashedRefreshToken,
+			time.Now().UTC(),
+			time.Now().UTC().Add(tokens.refreshDur),
+		)
+		if !errors.Is(err, ErrConflict) {
+			break
+		}
+		slog.Info("congratulation you should take a lottery ticket now!")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("logging in: %w", err)
+	}
 
 	return &LoginResponse{
 		User:         user,
