@@ -75,7 +75,7 @@ func (s *userService) Register(ctx context.Context, req *RegisterRequest) (*User
 	}
 }
 
-func (s *userService) Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error) {
+func (s *userService) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, error) {
 	var user *User
 	var err error
 	switch {
@@ -124,7 +124,7 @@ func (s *userService) Login(ctx context.Context, req *LoginRequest) (*LoginRespo
 		return nil, fmt.Errorf("logging in: %w", err)
 	}
 
-	return &LoginResponse{
+	return &AuthResponse{
 		User:         user,
 		AccessToken:  tokens.accessToken,
 		RefreshToken: tokens.rawRefreshToken,

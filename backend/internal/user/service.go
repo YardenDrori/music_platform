@@ -6,7 +6,7 @@ import (
 
 type AuthService interface {
 	Register(ctx context.Context, req *RegisterRequest) (*User, error)
-	Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error)
+	Login(ctx context.Context, req *LoginRequest) (*AuthResponse, error)
 }
 
 type userService struct {
