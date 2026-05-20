@@ -25,7 +25,7 @@ func main() {
 
 func run() error {
 	//==========Setup==========
-	godotenv.Load("../../.env")
+	godotenv.Load(".env")
 
 	m, err := migrate.New("file://migrations", os.Getenv("DATABASE_URL"))
 	if err != nil {
