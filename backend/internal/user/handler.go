@@ -46,3 +46,31 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
+func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
+	var req loginRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	resp, err := h.service.Login(r.Context(), &req)
+
+	if errors.Is(err, ErrUnauthorized) {
+		writeError(w, http.StatusUnauthorized, "invalid credentials")
+		return
+	}
+	if err, ok := errors.AsType[*ErrBadRequest](err); ok {
+		writeError(w, http.StatusBadRequest, err.Message)
+		return
+	}
+	if err != nil {
+		slog.Error("logging in: ", "error", err)
+		writeInternalError(w)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(&resp)
+}
