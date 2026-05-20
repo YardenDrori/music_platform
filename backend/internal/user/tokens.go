@@ -37,13 +37,12 @@ func NewJwtTokenizer(
 	signingkey []byte,
 	accessTokenDurSex time.Duration,
 	refreshTokenDurSec time.Duration,
-	tokenHasher tokenHasher,
 ) Tokenizer {
 	return &JWTTokenizerHS256{
 		signingKey:         signingkey,
 		accessTokenDurSex:  accessTokenDurSex,
 		refreshTokenDurSec: refreshTokenDurSec,
-		hasher:             tokenHasher,
+		hasher:             &sha256TokenHasher{},
 	}
 }
 
