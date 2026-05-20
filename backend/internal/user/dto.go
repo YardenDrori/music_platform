@@ -2,11 +2,11 @@ package user
 
 // ==========AUTH============
 type RegisterRequest struct {
-	Email     string
-	UserName  string
-	FirstName string
-	LastName  string
-	Password  string
+	Email     string `json:"email"`
+	UserName  string `json:"userName"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Password  string `json:"password"`
 }
 
 type LoginRequest struct {
