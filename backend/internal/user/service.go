@@ -5,7 +5,15 @@ import (
 )
 
 type AuthService interface {
+	//errors:
+	//[ErrBadRequest]
+	//[ErrUnauthorized]
 	Register(ctx context.Context, req *registerRequest) (*User, error)
+
+	//errors:
+	//[ErrBadRequest]
+	//[ErrUnauthorized]
+	//[fmt.Errorf]
 	Login(ctx context.Context, req *loginRequest) (*authResponse, error)
 }
 
