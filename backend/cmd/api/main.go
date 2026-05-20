@@ -8,6 +8,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
@@ -23,6 +26,14 @@ func main() {
 func run() error {
 	//==========Setup==========
 	godotenv.Load("../../.env")
+
+	m, err := migrate.New("file://migrations", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		return fmt.Errorf("setting up migrations: %w", err)
+	}
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("running migrations: %w", err)
+	}
 
 	db, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
