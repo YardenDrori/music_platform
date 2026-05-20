@@ -8,7 +8,7 @@ type AuthService interface {
 	//errors:
 	//[ErrBadRequest]
 	//[ErrUnauthorized]
-	Register(ctx context.Context, req *registerRequest) (*User, error)
+	Register(ctx context.Context, req *registerRequest) (*authResponse, error)
 
 	//errors:
 	//[ErrBadRequest]

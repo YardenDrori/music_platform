@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *userService) Register(ctx context.Context, req *registerRequest) (*User, error) {
+func (s *userService) Register(ctx context.Context, req *registerRequest) (*authResponse, error) {
 	if req.Email == "" || req.FirstName == "" || req.LastName == "" || req.Password == "" ||
 		req.UserName == "" {
 		return nil, &ErrBadRequest{Message: "missing fields"}
@@ -64,15 +64,26 @@ func (s *userService) Register(ctx context.Context, req *registerRequest) (*User
 		Active:       true,
 	}
 
+	tokens, err := s.tokenizer.GenerateTokenPair(&newUser)
+	if err != nil {
+		return nil, fmt.Errorf("registering: %w", err)
+	}
+
 	repoErr := s.repo.Create(ctx, &newUser)
 	switch {
 	case repoErr == nil:
-		return &newUser, nil
+		break
 	case errors.Is(repoErr, ErrConflict):
 		return nil, &ErrBadRequest{Message: "email or username unavailable"}
 	default:
 		return nil, fmt.Errorf("attempting to create new user: %w", repoErr)
 	}
+
+	return &authResponse{
+		AccessToken:  tokens.accessToken,
+		RefreshToken: tokens.rawRefreshToken,
+		User:         &newUser,
+	}, nil
 }
 
 func (s *userService) Login(ctx context.Context, req *loginRequest) (*authResponse, error) {
