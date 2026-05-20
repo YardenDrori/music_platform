@@ -11,6 +11,10 @@ type handler struct {
 	service AuthService
 }
 
+func writeInternalError(w http.ResponseWriter) {
+	writeError(w, http.StatusInternalServerError, "internal server error")
+}
+
 func writeError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -33,7 +37,7 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 		}
 
 		slog.Error("registering new account: ", "error", err)
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		writeInternalError(w)
 		return
 	}
 
