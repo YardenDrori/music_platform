@@ -1,7 +1,7 @@
 package user
 
 // ==========AUTH============
-type RegisterRequest struct {
+type registerRequest struct {
 	Email     string `json:"email"`
 	UserName  string `json:"userName"`
 	FirstName string `json:"firstName"`
@@ -9,13 +9,13 @@ type RegisterRequest struct {
 	Password  string `json:"password"`
 }
 
-type LoginRequest struct {
+type loginRequest struct {
 	Email    *string
 	UserName *string
 	Password string
 }
 
-type AuthResponse struct {
+type authResponse struct {
 	User         *User
 	RefreshToken string
 	AccessToken  string

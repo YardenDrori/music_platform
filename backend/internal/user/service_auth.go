@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *userService) Register(ctx context.Context, req *RegisterRequest) (*User, error) {
+func (s *userService) Register(ctx context.Context, req *registerRequest) (*User, error) {
 	if req.Email == "" || req.FirstName == "" || req.LastName == "" || req.Password == "" ||
 		req.UserName == "" {
 		return nil, &ErrBadRequest{Message: "missing fields"}
@@ -75,7 +75,7 @@ func (s *userService) Register(ctx context.Context, req *RegisterRequest) (*User
 	}
 }
 
-func (s *userService) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, error) {
+func (s *userService) Login(ctx context.Context, req *loginRequest) (*authResponse, error) {
 	var user *User
 	var err error
 	switch {
@@ -124,7 +124,7 @@ func (s *userService) Login(ctx context.Context, req *LoginRequest) (*AuthRespon
 		return nil, fmt.Errorf("logging in: %w", err)
 	}
 
-	return &AuthResponse{
+	return &authResponse{
 		User:         user,
 		AccessToken:  tokens.accessToken,
 		RefreshToken: tokens.rawRefreshToken,
