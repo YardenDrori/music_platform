@@ -38,7 +38,7 @@ type postgresRepository struct {
 	db *pgxpool.Pool
 }
 
-func NewRepository(db *pgxpool.Pool) Repository {
+func NewPostgresRepository(db *pgxpool.Pool) Repository {
 	return &postgresRepository{db: db}
 }
 
