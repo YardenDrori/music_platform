@@ -29,7 +29,7 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.service.Register(r.Context(), &req)
+	resp, err := h.service.Register(r.Context(), &req)
 	if err != nil {
 		if err, ok := errors.AsType[*ErrBadRequest](err); ok {
 			writeError(w, http.StatusBadRequest, err.Message)
@@ -43,5 +43,6 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(resp)
 }
+
