@@ -11,6 +11,10 @@ type handler struct {
 	service AuthService
 }
 
+func NewHandler(service AuthService) *handler {
+	return &handler{service: service}
+}
+
 func writeInternalError(w http.ResponseWriter) {
 	writeError(w, http.StatusInternalServerError, "internal server error")
 }
