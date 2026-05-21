@@ -8,13 +8,13 @@ type AuthService interface {
 	//errors:
 	//[ErrBadRequest]
 	//[ErrUnauthorized]
-	Register(ctx context.Context, req *registerRequest) (*authResponse, error)
+	Register(ctx context.Context, req *registerRequest) (*authServiceResponse, error)
 
 	//errors:
 	//[ErrBadRequest]
 	//[ErrUnauthorized]
 	//[fmt.Errorf]
-	Login(ctx context.Context, req *loginRequest) (*authResponse, error)
+	Login(ctx context.Context, req *loginRequest) (*authServiceResponse, error)
 }
 
 type userService struct {

@@ -12,7 +12,16 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *userService) Register(ctx context.Context, req *registerRequest) (*authResponse, error) {
+type authServiceResponse struct {
+	authResponse
+	refreshToken   string
+	refreshExpirey time.Time
+}
+
+func (s *userService) Register(
+	ctx context.Context,
+	req *registerRequest,
+) (*authServiceResponse, error) {
 	if req.Email == "" || req.FirstName == "" || req.LastName == "" || req.Password == "" ||
 		req.UserName == "" {
 		return nil, &ErrBadRequest{Message: "missing fields"}
@@ -79,14 +88,16 @@ func (s *userService) Register(ctx context.Context, req *registerRequest) (*auth
 		return nil, fmt.Errorf("attempting to create new user: %w", repoErr)
 	}
 
-	return &authResponse{
-		AccessToken:  tokens.accessToken,
-		RefreshToken: tokens.rawRefreshToken,
-		User:         &newUser,
+	return &authServiceResponse{
+		authResponse: authResponse{
+			AccessToken: tokens.accessToken,
+			User:        &newUser},
+		refreshToken:   tokens.rawRefreshToken,
+		refreshExpirey: time.Now().UTC().Add(tokens.refreshDur),
 	}, nil
 }
 
-func (s *userService) Login(ctx context.Context, req *loginRequest) (*authResponse, error) {
+func (s *userService) Login(ctx context.Context, req *loginRequest) (*authServiceResponse, error) {
 	var user *User
 	var err error
 	switch {
@@ -135,10 +146,12 @@ func (s *userService) Login(ctx context.Context, req *loginRequest) (*authRespon
 		return nil, fmt.Errorf("logging in: %w", err)
 	}
 
-	return &authResponse{
-		User:         user,
-		AccessToken:  tokens.accessToken,
-		RefreshToken: tokens.rawRefreshToken,
+	return &authServiceResponse{
+		authResponse: authResponse{
+			User:        user,
+			AccessToken: tokens.accessToken},
+		refreshToken:   tokens.rawRefreshToken,
+		refreshExpirey: time.Now().UTC().Add(tokens.refreshDur),
 	}, nil
 
 }
