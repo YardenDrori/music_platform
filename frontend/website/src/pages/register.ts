@@ -1,18 +1,51 @@
+import { register } from "../api/auth";
+import type { AuthResponse, RegisterRequest } from "../types/auth";
+
 export function renderRegister(): void {
   document.querySelector("#app")!.innerHTML = `
 <form id="register-form">
-<input type="email" placeholder="Email" />
-<input type="text" placeholder="Username" />
-<input type="text" placeholder="Firstname" />
-<input type="text" placeholder="Lastname" />
-<input type="password" placeholder="Password" />
-<input type="text" placeholder="Confirm Password" />
+<input type="email" name="email" placeholder="Email" />
+<input type="text" name="username" placeholder="Username" />
+<input type="text" name="firstname" placeholder="Firstname" />
+<input type="text" name="lastname" placeholder="Lastname" />
+<input type="password" name="password" placeholder="Password" />
+<input type="text" name="confirm-password" placeholder="Confirm Password" />
 <button>Submit</button>
 </form>
 `;
 
-  document.querySelector("#register-form")!.addEventListener("submit", (e) => {
-    e.preventDefault();
-    console.log("submitted registration request");
-  });
+  document
+    .querySelector("#register-form")!
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(
+        document.querySelector("#register-form") as HTMLFormElement,
+      );
+
+      if (
+        (formData.get("password") as string) !==
+        formData.get("confirm-password")
+      ) {
+        alert("passwords do not match");
+        return;
+      }
+
+      const req: RegisterRequest = {
+        email: formData.get("email") as string,
+        userName: formData.get("username") as string,
+        firstName: formData.get("firstname") as string,
+        lastName: formData.get("lastname") as string,
+        password: formData.get("password") as string,
+      };
+
+      //issue here
+      let resp: AuthResponse;
+      try {
+        resp = await register(req);
+        console.log(resp);
+      } catch (e) {
+        console.log(e);
+      }
+    });
 }
