@@ -47,9 +47,21 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh-token",
+		Value:    resp.refreshToken,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+		Expires:  resp.refreshExpirey,
+	})
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(&resp); err != nil {
+
+	if err := json.NewEncoder(w).Encode(&authResponse{
+		User:        resp.User,
+		AccessToken: resp.AccessToken,
+	}); err != nil {
 		slog.Error("encoding response", "error", err)
 	}
 }
@@ -78,9 +90,22 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		writeInternalError(w)
 		return
 	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh-token",
+		Value:    resp.refreshToken,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+		Expires:  resp.refreshExpirey,
+	})
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(&resp); err != nil {
+
+	if err := json.NewEncoder(w).Encode(&authResponse{
+		User:        resp.User,
+		AccessToken: resp.AccessToken,
+	}); err != nil {
 		slog.Error("encoding response", "error", err)
 	}
 }
