@@ -28,9 +28,12 @@ export async function register(req: RegisterRequest): Promise<AuthResponse> {
   return validateResponse(response);
 }
 
-  if (!response.ok) {
-    throw new Error(resp.error);
-  }
+export async function login(req: LoginRequest): Promise<AuthResponse> {
+  const response = await fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
 
-  return resp;
+  return validateResponse(response);
 }
