@@ -1,5 +1,5 @@
 import { register } from "../api/auth";
-import { route } from "../main";
+import { route } from "../router";
 import { setAccessToken } from "../state";
 import type { AuthResponse, RegisterRequest } from "../types/auth";
 import { verifyValidEmail } from "../utils";

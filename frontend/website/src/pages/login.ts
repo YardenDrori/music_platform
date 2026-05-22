@@ -1,12 +1,12 @@
 import { login } from "../api/auth";
-import { route } from "../main";
+import { route } from "../router";
 import { setAccessToken } from "../state";
 import type { AuthResponse, LoginRequest } from "../types/auth";
 import { verifyValidEmail } from "../utils";
 
 export function renderLogin(): void {
   document.querySelector("#app")!.innerHTML = `
-  <li>
+  <div>
     <form id="login-form">
       <h1>Welcome back! Please login.</h1>
 
@@ -23,7 +23,7 @@ export function renderLogin(): void {
       <button type="submit">Login</button>
     </form>
     <a id="register-button">Register</a>
-  </li>
+  </div>
   `;
 
   document
