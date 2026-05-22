@@ -22,7 +22,7 @@ export function renderLogin(): void {
       <p id="form-message"></p>
       <button type="submit">Login</button>
     </form>
-    <a id="register-button">Register</a>
+    <button type="button" id="register-button">Register</button>
   </div>
   `;
 
