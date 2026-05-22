@@ -10,9 +10,9 @@ type registerRequest struct {
 }
 
 type loginRequest struct {
-	Email    *string
-	UserName *string
-	Password string
+	Email    *string `json:"email"`
+	UserName *string `json:"username"`
+	Password string  `json:"password"`
 }
 
 type authResponse struct {
