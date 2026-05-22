@@ -51,14 +51,6 @@ export function renderRegister(): void {
         document.querySelector("#register-form") as HTMLFormElement,
       );
 
-      if (
-        (formData.get("password") as string) !==
-        formData.get("confirm-password")
-      ) {
-        alert("passwords do not match");
-        return;
-      }
-
       const req: RegisterRequest = {
         email: formData.get("email") as string,
         userName: formData.get("username") as string,
@@ -66,6 +58,12 @@ export function renderRegister(): void {
         lastName: formData.get("lastname") as string,
         password: formData.get("password") as string,
       };
+
+      if (req.password !== formData.get("confirm-password")) {
+        document.querySelector("#form-message")!.textContent =
+          "Passwords do not match dumbass lmao";
+        return;
+      }
 
       let resp: AuthResponse;
       try {
