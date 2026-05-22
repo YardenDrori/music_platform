@@ -1,8 +1,8 @@
 import { register } from "../api/auth";
+import { route } from "../main";
 import { setAccessToken } from "../state";
 import type { AuthResponse, RegisterRequest } from "../types/auth";
 import { verifyValidEmail } from "../utils";
-import { renderLogin } from "./login";
 
 export function renderRegister(): void {
   document.querySelector("#app")!.innerHTML = `
@@ -89,6 +89,6 @@ export function renderRegister(): void {
   document.querySelector("#login-button")!.addEventListener("click", (e) => {
     e.preventDefault();
     window.history.pushState({}, "", "/login");
-    renderLogin();
+    route();
   });
 }

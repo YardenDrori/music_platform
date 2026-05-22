@@ -1,7 +1,7 @@
 import { renderLogin } from "./pages/login";
 import { renderRegister } from "./pages/register";
 
-function route() {
+export function route() {
   const path = window.location.pathname;
   if (path === "/login") {
     renderLogin();

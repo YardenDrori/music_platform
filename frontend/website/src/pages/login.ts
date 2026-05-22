@@ -1,8 +1,8 @@
 import { login } from "../api/auth";
+import { route } from "../main";
 import { setAccessToken } from "../state";
 import type { AuthResponse, LoginRequest } from "../types/auth";
 import { verifyValidEmail } from "../utils";
-import { renderRegister } from "./register";
 
 export function renderLogin(): void {
   document.querySelector("#app")!.innerHTML = `
@@ -75,7 +75,7 @@ export function renderLogin(): void {
 
   document.querySelector("#register-button")!.addEventListener("click", (e) => {
     e.preventDefault();
-    window.history.pushState({}, "", "/reigster");
-    renderRegister();
+    window.history.pushState({}, "", "/register");
+    route();
   });
 }
