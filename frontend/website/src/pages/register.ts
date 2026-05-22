@@ -1,4 +1,5 @@
 import { register } from "../api/auth";
+import { setAccessToken } from "../state";
 import type { AuthResponse, RegisterRequest } from "../types/auth";
 
 export function renderRegister(): void {
@@ -39,13 +40,13 @@ export function renderRegister(): void {
         password: formData.get("password") as string,
       };
 
-      //issue here
       let resp: AuthResponse;
       try {
         resp = await register(req);
-        console.log(resp);
+        setAccessToken(resp.accessToken);
+        console.log("registration successful");
       } catch (e) {
-        console.log(e);
+        console.log("registration failed: " + e);
       }
     });
 }
