@@ -1,6 +1,7 @@
 import { register } from "../api/auth";
 import { setAccessToken } from "../state";
 import type { AuthResponse, RegisterRequest } from "../types/auth";
+import { verifyValidEmail } from "../utils";
 
 export function renderRegister(): void {
   document.querySelector("#app")!.innerHTML = `
@@ -9,7 +10,7 @@ export function renderRegister(): void {
 
   <div>
     <label for="email">Email</label>
-    <input type="email" id="email" name="email" required />
+    <input type="text" id="email" name="email" required />
   </div>
 
   <div>
@@ -59,6 +60,12 @@ export function renderRegister(): void {
         password: formData.get("password") as string,
       };
 
+      if (!verifyValidEmail(req.email)) {
+        document.querySelector("#form-message")!.textContent =
+          "Invalid Email address";
+        return;
+      }
+
       if (req.password !== formData.get("confirm-password")) {
         document.querySelector("#form-message")!.textContent =
           "Passwords do not match dumbass lmao";
@@ -69,8 +76,7 @@ export function renderRegister(): void {
       try {
         resp = await register(req);
         setAccessToken(resp.accessToken);
-        document.querySelector("#form-message")!.textContent =
-          "Registration successful!";
+        console.log("registration successful");
       } catch (e) {
         document.querySelector("#form-message")!.textContent =
           "" + (e as Error).message;
