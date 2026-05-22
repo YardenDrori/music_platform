@@ -9,7 +9,8 @@ export type RegisterRequest = {
 };
 
 export type LoginRequest = {
-  identifier: string;
+  email: string;
+  username: string;
   password: string;
 };
 
