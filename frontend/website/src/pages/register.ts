@@ -5,7 +5,7 @@ import type { AuthResponse, RegisterRequest } from "../types/auth";
 export function renderRegister(): void {
   document.querySelector("#app")!.innerHTML = `
 <form id="register-form">
-  <h1>Create an account</h1>
+  <h1>Create an account!</h1>
 
   <div>
     <label for="email">Email</label>
@@ -69,9 +69,11 @@ export function renderRegister(): void {
       try {
         resp = await register(req);
         setAccessToken(resp.accessToken);
-        console.log("registration successful");
+        document.querySelector("#form-message")!.textContent =
+          "Registration successful!";
       } catch (e) {
-        console.log("registration failed: " + e);
+        document.querySelector("#form-message")!.textContent =
+          "" + (e as Error).message;
       }
     });
 }
