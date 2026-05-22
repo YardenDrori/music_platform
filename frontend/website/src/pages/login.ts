@@ -2,24 +2,28 @@ import { login } from "../api/auth";
 import { setAccessToken } from "../state";
 import type { AuthResponse, LoginRequest } from "../types/auth";
 import { verifyValidEmail } from "../utils";
+import { renderRegister } from "./register";
 
 export function renderLogin(): void {
   document.querySelector("#app")!.innerHTML = `
-  <form id="login-form">
-    <h1>Welcome back! Please login.</h1>
+  <li>
+    <form id="login-form">
+      <h1>Welcome back! Please login.</h1>
 
-    <div>
-      <label for="identifier">Email or username</label>
-      <input type="text" id="identifier" name="identifier" required />
-    </div>
-    <div>
-      <label for="password">password</label>
-      <input type="password" id="password" name="password" required />
-    </div>
+      <div>
+        <label for="identifier">Email or username</label>
+        <input type="text" id="identifier" name="identifier" required />
+      </div>
+      <div>
+        <label for="password">password</label>
+        <input type="password" id="password" name="password" required />
+      </div>
 
-    <p id="form-message"></p>
-    <button type="submit">Login</button>
-  </form>
+      <p id="form-message"></p>
+      <button type="submit">Login</button>
+    </form>
+    <a id="register-button">Register</a>
+  </li>
   `;
 
   document
@@ -68,4 +72,10 @@ export function renderLogin(): void {
 
       setAccessToken(resp.accessToken);
     });
+
+  document.querySelector("#register-button")!.addEventListener("click", (e) => {
+    e.preventDefault();
+    window.history.pushState({}, "", "/reigster");
+    renderRegister();
+  });
 }
