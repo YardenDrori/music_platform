@@ -1,3 +1,4 @@
+import { renderDashboard } from "./pages/dashboard";
 import { renderLogin } from "./pages/login";
 import { renderRegister } from "./pages/register";
 
@@ -8,6 +9,7 @@ export function route() {
   } else if (path === "/register") {
     renderRegister();
   } else {
-    renderLogin();
+    //default route
+    renderDashboard();
   }
 }
