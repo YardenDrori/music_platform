@@ -22,29 +22,29 @@ type Claims struct {
 }
 
 type JWTTokenizerHS256 struct {
-	signingKey         []byte
-	accessTokenDurSex  time.Duration
-	refreshTokenDurSec time.Duration
-	hasher             tokenHasher
+	signingKey      []byte
+	accessTokenDur  time.Duration
+	refreshTokenDur time.Duration
+	hasher          tokenHasher
 }
 
 func NewJwtTokenizer(
 	signingkey []byte,
-	accessTokenDurSex time.Duration,
-	refreshTokenDurSec time.Duration,
+	accessTokenDur time.Duration,
+	refreshTokenDur time.Duration,
 ) *JWTTokenizerHS256 {
 	return &JWTTokenizerHS256{
-		signingKey:         signingkey,
-		accessTokenDurSex:  accessTokenDurSex,
-		refreshTokenDurSec: refreshTokenDurSec,
-		hasher:             &sha256TokenHasher{},
+		signingKey:      signingkey,
+		accessTokenDur:  accessTokenDur,
+		refreshTokenDur: refreshTokenDur,
+		hasher:          &sha256TokenHasher{},
 	}
 }
 
 func (t *JWTTokenizerHS256) newAccess(
 	user *User,
 ) (*string, error) {
-	expTime := time.Now().UTC().Add(t.accessTokenDurSex)
+	expTime := time.Now().UTC().Add(t.accessTokenDur)
 
 	claims := Claims{
 		jwt.RegisteredClaims{
@@ -79,7 +79,7 @@ func (t *JWTTokenizerHS256) GenerateTokenPair(
 		accessToken:        *accessToken,
 		rawRefreshToken:    rawRefreshToken,
 		hashedRefreshToken: hashedRefreshToken,
-		refreshDur:         t.refreshTokenDurSec,
+		refreshDur:         t.refreshTokenDur,
 	}, nil
 }
 
