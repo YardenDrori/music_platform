@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -25,6 +26,7 @@ func main() {
 
 func run() error {
 	//==========Setup==========
+	//nolint
 	godotenv.Load(".env")
 
 	m, err := migrate.New("file://migrations", os.Getenv("DATABASE_URL"))
@@ -40,6 +42,7 @@ func run() error {
 		return fmt.Errorf("connecting to database: %w", err)
 	}
 	defer db.Close()
+	slog.Info("connected to database")
 
 	signingKey := os.Getenv("SIGNING_KEY")
 	accessTokenDurStr := os.Getenv("ACCESS_TOKEN_DURATION")
@@ -50,18 +53,22 @@ func run() error {
 	if accessTokenDurStr == "" {
 		return fmt.Errorf("ACCESS_TOKEN_DURATION not present in env")
 	}
+	slog.Info("access token duration", "duration", accessTokenDurStr)
 	if refreshTokenDurStr == "" {
 		return fmt.Errorf("REFRESH_TOKEN_DURATION not present in env")
 	}
+	slog.Info("refresh token duration", "duration", refreshTokenDurStr)
 
 	accessTokenDur, err := time.ParseDuration(accessTokenDurStr)
 	if err != nil {
 		return fmt.Errorf("invalid ACCESS_TOKEN_DURATION: %w", err)
 	}
+	slog.Info("access token duration", "duration", accessTokenDur)
 	refreshTokenDur, err := time.ParseDuration(refreshTokenDurStr)
 	if err != nil {
 		return fmt.Errorf("invalid REFRESH_TOKEN_DURATION: %w", err)
 	}
+	slog.Info("refresh token duration", "duration", refreshTokenDur)
 
 	//==========User==========
 	userHandler := user.NewHandler(
