@@ -78,6 +78,20 @@ func (s *userService) Register(
 		return nil, fmt.Errorf("registering: %w", err)
 	}
 
+	for range 3 {
+		err = s.repo.NewToken(
+			ctx,
+			newUser.ID,
+			tokens.hashedRefreshToken,
+			time.Now().UTC(),
+			time.Now().UTC().Add(tokens.refreshDur),
+		)
+		if !errors.Is(err, ErrConflict) {
+			break
+		}
+		slog.Info("congratulation you should take a lottery ticket now!")
+	}
+
 	repoErr := s.repo.Create(ctx, &newUser)
 	switch {
 	case repoErr == nil:
