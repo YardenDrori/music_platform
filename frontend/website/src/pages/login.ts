@@ -63,7 +63,10 @@ export function renderLogin(): void {
       let resp: AuthResponse;
       try {
         resp = await login(req);
+        setAccessToken(resp.accessToken);
         console.log("login successful");
+        window.history.pushState({}, "", "/");
+        route();
       } catch (e) {
         document.getElementById("form-message")!.textContent =
           "" + (e as Error).message;

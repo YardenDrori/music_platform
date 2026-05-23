@@ -80,6 +80,8 @@ export function renderRegister(): void {
         resp = await register(req);
         setAccessToken(resp.accessToken);
         console.log("registration successful");
+        window.history.pushState({}, "", "/");
+        route();
       } catch (e) {
         document.querySelector("#form-message")!.textContent =
           "" + (e as Error).message;
