@@ -1,6 +1,16 @@
 import { renderDashboard } from "./pages/dashboard";
 import { renderLogin } from "./pages/login";
 import { renderRegister } from "./pages/register";
+import { getAccessToken } from "./state";
+
+function needLogin(render: () => void) {
+  if (!getAccessToken()) {
+    history.pushState({}, "", "/login");
+  } else {
+    render();
+  }
+  route();
+}
 
 export function route() {
   const path = window.location.pathname;
@@ -10,6 +20,6 @@ export function route() {
     renderRegister();
   } else {
     //default route
-    renderDashboard();
+    needLogin(() => renderDashboard);
   }
 }
