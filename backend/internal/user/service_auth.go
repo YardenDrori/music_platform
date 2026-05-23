@@ -78,6 +78,16 @@ func (s *userService) Register(
 		return nil, fmt.Errorf("registering: %w", err)
 	}
 
+	repoErr := s.repo.Create(ctx, &newUser)
+	switch {
+	case repoErr == nil:
+		break
+	case errors.Is(repoErr, ErrConflict):
+		return nil, &ErrBadRequest{Message: "email or username unavailable"}
+	default:
+		return nil, fmt.Errorf("attempting to create new user: %w", repoErr)
+	}
+
 	for range 3 {
 		err = s.repo.NewToken(
 			ctx,
@@ -91,15 +101,8 @@ func (s *userService) Register(
 		}
 		slog.Info("congratulation you should take a lottery ticket now!")
 	}
-
-	repoErr := s.repo.Create(ctx, &newUser)
-	switch {
-	case repoErr == nil:
-		break
-	case errors.Is(repoErr, ErrConflict):
-		return nil, &ErrBadRequest{Message: "email or username unavailable"}
-	default:
-		return nil, fmt.Errorf("attempting to create new user: %w", repoErr)
+	if err != nil {
+		return nil, fmt.Errorf("registering: %w", err)
 	}
 
 	return &authServiceResponse{

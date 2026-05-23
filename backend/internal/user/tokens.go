@@ -21,11 +21,6 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-type Tokenizer interface {
-	ValidateAccessToken(ctx context.Context, token string) (*Claims, error)
-	GenerateTokenPair(user *User) (*tokenPair, error)
-}
-
 type JWTTokenizerHS256 struct {
 	signingKey         []byte
 	accessTokenDurSex  time.Duration
@@ -37,7 +32,7 @@ func NewJwtTokenizer(
 	signingkey []byte,
 	accessTokenDurSex time.Duration,
 	refreshTokenDurSec time.Duration,
-) Tokenizer {
+) *JWTTokenizerHS256 {
 	return &JWTTokenizerHS256{
 		signingKey:         signingkey,
 		accessTokenDurSex:  accessTokenDurSex,

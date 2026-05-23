@@ -12,28 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type Repository interface {
-	//account actions
-	Create(ctx context.Context, u *User) error
-	Update(ctx context.Context, u *User) error
-	Delete(ctx context.Context, id uuid.UUID) error
-	FindByEmail(ctx context.Context, e string) (*User, error)
-	FindByID(ctx context.Context, id uuid.UUID) (*User, error)
-	FindByUsername(ctx context.Context, u string) (*User, error)
-
-	//token actions
-	NewToken(
-		ctx context.Context,
-		id uuid.UUID,
-		tokenHash string,
-		iat time.Time,
-		exp time.Time,
-	) error
-	DeleteToken(ctx context.Context, id uuid.UUID, tokenHash string) error
-	FindToken(ctx context.Context, tokenHash string) (*uuid.UUID, error)
-	CleanExpiredTokens(ctx context.Context) error
-}
-
 type postgresRepository struct {
 	db *pgxpool.Pool
 }
