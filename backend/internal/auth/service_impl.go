@@ -14,6 +14,22 @@ import (
 	"github.com/YardenDrori/music-platform/internal/user"
 )
 
+type service struct {
+	userService    user.Service
+	repo           repository
+	passwordHasher passwordHasher
+	tokenHasher    tokenHasher
+	tokenizer      tokenizer
+}
+
+func NewService(repo repository, tok tokenizer) *service {
+	return &service{
+		repo:           repo,
+		passwordHasher: &argon2idPasswordHasher{},
+		tokenizer:      tok,
+	}
+}
+
 type authServiceResponse struct {
 	accessToken    string
 	refreshToken   string

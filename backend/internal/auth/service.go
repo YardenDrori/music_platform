@@ -57,19 +57,3 @@ type Service interface {
 	//[fmt.Errorf]
 	RequestAccessToken(ctx context.Context, oldRawToken string) (*authServiceResponse, error)
 }
-
-type service struct {
-	userService    user.Service
-	repo           repository
-	passwordHasher passwordHasher
-	tokenHasher    tokenHasher
-	tokenizer      tokenizer
-}
-
-func NewService(repo repository, tok tokenizer) *service {
-	return &service{
-		repo:           repo,
-		passwordHasher: &argon2idPasswordHasher{},
-		tokenizer:      tok,
-	}
-}
