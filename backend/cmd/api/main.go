@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
+	"github.com/YardenDrori/music-platform/internal/auth"
 	"github.com/YardenDrori/music-platform/internal/user"
 )
 
@@ -74,7 +75,6 @@ func run() error {
 	userHandler := user.NewHandler(
 		user.NewService(
 			user.NewPostgresRepository(db),
-			user.NewJwtTokenizer([]byte(signingKey), accessTokenDur, refreshTokenDur),
 		),
 	)
 
