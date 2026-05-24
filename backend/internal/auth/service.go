@@ -59,7 +59,7 @@ type Service interface {
 }
 
 type service struct {
-	userService    user.UserService
+	userService    user.Service
 	repo           repository
 	passwordHasher passwordHasher
 	tokenHasher    tokenHasher
