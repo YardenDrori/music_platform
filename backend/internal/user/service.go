@@ -19,4 +19,6 @@ type Service interface {
 	NewAccount(ctx context.Context, user *User) error
 	FindByEmail(ctx context.Context, email string) (*User, error)
 	FindByUsername(ctx context.Context, username string) (*User, error)
+	DeleteAccount(ctx context.Context, id uuid.UUID) error
+	DeactivateAccount(ctx context.Context, id uuid.UUID) error
 }
