@@ -78,10 +78,18 @@ func run() error {
 		),
 	)
 
+	//==========AUTH==========
+	authHandler := auth.NewHandler(
+		auth.NewService(
+			auth.NewPostgresRepository(db),
+			auth.NewJwtTokenizer([]byte(signingKey), accessTokenDur, refreshTokenDur),
+		),
+	)
+
 	//==========Server==========
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /api/register", userHandler.Register)
-	mux.HandleFunc("POST /api/login", userHandler.Login)
+	mux.HandleFunc("POST /api/register", authHandler.Register)
+	mux.HandleFunc("POST /api/login", authHandler.Login)
 
 	log.Println("server starting on :8080")
 	return http.ListenAndServe(":8080", mux)
