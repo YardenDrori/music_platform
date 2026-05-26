@@ -72,19 +72,17 @@ func run() error {
 	slog.Info("refresh token duration", "duration", refreshTokenDur)
 
 	//==========User==========
-	userHandler := user.NewHandler(
-		user.NewService(
-			user.NewPostgresRepository(db),
-		),
-	)
+	userService := user.NewService(user.NewPostgresRepository(db))
+	userHandler := user.NewHandler(userService)
 
-	//==========AUTH==========
-	authHandler := auth.NewHandler(
-		auth.NewService(
-			auth.NewPostgresRepository(db),
-			auth.NewJwtTokenizer([]byte(signingKey), accessTokenDur, refreshTokenDur),
-		),
+	//==========Auth==========
+	authService := auth.NewService(
+		auth.NewPostgresRepository(db),
+		auth.NewJwtTokenizer([]byte(signingKey), accessTokenDur, refreshTokenDur),
+		userService,
 	)
+	authHandler := auth.NewHandler(authService)
+	requireAuth := auth.NewRequireAuth(authService)
 
 	//==========Server==========
 	mux := http.NewServeMux()
