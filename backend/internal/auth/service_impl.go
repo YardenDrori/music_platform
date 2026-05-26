@@ -22,11 +22,12 @@ type service struct {
 	tokenizer      tokenizer
 }
 
-func NewService(repo repository, tok tokenizer) *service {
+func NewService(repo repository, tok tokenizer, userService user.Service) *service {
 	return &service{
 		repo:           repo,
 		passwordHasher: &argon2idPasswordHasher{},
 		tokenizer:      tok,
+		userService:    userService,
 	}
 }
 
