@@ -45,6 +45,8 @@ type tokenHasher interface {
 }
 
 type Service interface {
+	TokenValidator
+
 	//errors:
 	//[ErrBadRequest]
 	//[ErrUnauthorized]

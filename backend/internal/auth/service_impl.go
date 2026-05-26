@@ -37,6 +37,10 @@ type authServiceResponse struct {
 	refreshExpirey time.Time
 }
 
+func (s *service) ValidateAccessToken(ctx context.Context, token string) (*Claims, error) {
+	return s.tokenizer.ValidateAccessToken(ctx, token)
+}
+
 func (s *service) Register(
 	ctx context.Context,
 	req *registerRequest,
