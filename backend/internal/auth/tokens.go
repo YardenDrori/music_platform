@@ -88,6 +88,10 @@ func (t *JWTTokenizerHS256) ValidateAccessToken(
 	ctx context.Context,
 	token string,
 ) (*Claims, error) {
+	if token == "" {
+		return nil, &ErrBadRequest{Message: "token not provided"}
+	}
+
 	claims := &Claims{}
 
 	_, err := jwt.ParseWithClaims(token, claims,

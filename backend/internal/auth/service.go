@@ -23,6 +23,10 @@ type repository interface {
 }
 
 type TokenValidator interface {
+	// errors:
+	// [ErrBadToken]
+	// [ErrBadRequest]
+	// [Errorf]
 	ValidateAccessToken(ctx context.Context, token string) (*Claims, error)
 }
 
