@@ -6,10 +6,10 @@ import { getAccessToken } from "./state";
 function needLogin(render: () => void) {
   if (!getAccessToken()) {
     history.pushState({}, "", "/login");
+    route();
   } else {
     render();
   }
-  route();
 }
 
 export function route() {
@@ -20,6 +20,6 @@ export function route() {
     renderRegister();
   } else {
     //default route
-    needLogin(() => renderDashboard);
+    needLogin(renderDashboard);
   }
 }
