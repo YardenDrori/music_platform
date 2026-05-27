@@ -1,14 +1,15 @@
 package auth
 
 import (
-	"context"
 	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
-)
 
-type contextClaims struct{}
+	"github.com/google/uuid"
+
+	"github.com/YardenDrori/music-platform/internal/identity"
+)
 
 func NewRequireAuth(
 	validator TokenValidator, //takes our validation implementation via validator
@@ -41,7 +42,20 @@ func NewRequireAuth(
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), contextClaims{}, claims)
+			id, err := uuid.Parse(claims.Subject)
+			if err != nil {
+				slog.Error(
+					"claims.Subject is not a valid UUID",
+					"subject",
+					claims.Subject,
+					"err",
+					err,
+				)
+				writeInternalError(w)
+				return
+			}
+
+			ctx := identity.WithUserID(r.Context(), id)
 			modifiedReq := r.WithContext(ctx)
 
 			next(w, modifiedReq)
