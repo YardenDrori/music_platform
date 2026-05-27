@@ -18,14 +18,24 @@ export function verifyValidEmail(email: string): boolean {
 
 export async function validateResponse(resp: Response): Promise<any> {
   if (resp.status >= 500) {
-    throw new Error("internal server error");
+    throw new Error("Internal server error");
   }
 
   const respJson = await resp.json();
 
   if (!resp.ok) {
-    throw new Error(respJson.error);
+    throw new Error(respJson?.error ?? "unkown error");
   }
 
   return respJson;
+}
+
+export async function validateEmptyResponse(resp: Response): Promise<void> {
+  if (resp.status >= 500) {
+    throw new Error("Internal server error");
+  }
+  const respJson = await resp.json();
+  if (!resp.ok) {
+    throw new Error(respJson?.error ?? "unkown error");
+  }
 }
