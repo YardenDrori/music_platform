@@ -63,7 +63,7 @@ func (h *handler) GetMe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
-	var newAccount User
+	var newAccount NewUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&newAccount); err != nil {
 		writeError(w, http.StatusBadRequest, "Malformed user provided")
 	}
