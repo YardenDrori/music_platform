@@ -115,6 +115,10 @@ func (s *service) Register(
 	}, &newUser, nil
 }
 
+// errors:
+// ErrBadRequest
+// ErrUnauthenticated
+// Errorf
 func (s *service) Login(
 	ctx context.Context,
 	req *loginRequest,
