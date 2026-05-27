@@ -41,6 +41,9 @@ func (r *postgresRepository) Create(ctx context.Context, u *User) error {
 	return fmt.Errorf("creating new user in postgres db: %w", err)
 }
 
+// errors:
+// ErrConflict,
+// errorf
 func (r *postgresRepository) Update(ctx context.Context, u *User) error {
 	_, err := r.db.Exec(ctx,
 		`UPDATE users SET email = $1, username = $2, first_name = $3, last_name = $4,
@@ -87,6 +90,9 @@ func (r *postgresRepository) FindByEmail(ctx context.Context, email string) (*Us
 	return u, nil
 }
 
+// errors:
+// [ErrNotFound]
+// [errorf]
 func (r *postgresRepository) FindByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	u := &User{}
 	err := r.db.QueryRow(ctx,

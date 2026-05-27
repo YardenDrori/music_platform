@@ -22,6 +22,9 @@ func NewService(repo repository) Service {
 	}
 }
 
+// errors:
+// [ErrUnathenticated]
+// [ErrForbidden]
 func requireSelf(ctx context.Context, id uuid.UUID) error {
 	requesterID, ok := identity.UserIDFromContext(ctx)
 	if !ok {
@@ -33,7 +36,9 @@ func requireSelf(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *service) NewAccount(ctx context.Context, user *User) error {
+// errors:
+// ErrBadRequest
+func validateAccountBusinessRules(user *User) error {
 	//validation logic
 	if utf8.RuneCountInString(user.Username) < 3 || utf8.RuneCountInString(user.Email) < 3 ||
 		utf8.RuneCountInString(user.FirstName) < 3 ||
@@ -46,6 +51,13 @@ func (s *service) NewAccount(ctx context.Context, user *User) error {
 	if !ok || emailPrefix == "" || emailPostfix == "" || !strings.Contains(emailPostfix, ".") ||
 		strings.Contains(emailPostfix, "@") {
 		return &ErrBadRequest{Message: "invalid email address"}
+	}
+	return nil
+}
+
+func (s *service) NewAccount(ctx context.Context, user *User) error {
+	if err := validateAccountBusinessRules(user); err != nil {
+		return err
 	}
 
 	//TODO: ping email provider and send verification email here
@@ -93,6 +105,47 @@ func (s *service) FindByUsername(ctx context.Context, username string) (*User, e
 	return user, nil
 }
 
+// errors:
+// [ErrUnathenticated]
+// [ErrForbidden]
+// [ErrNotFound]
+// [errorf]
+func (s *service) FindByUUID(ctx context.Context, id uuid.UUID) (*User, error) {
+	if err := requireSelf(ctx, id); err != nil {
+		return nil, err
+	}
+
+	user, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+// errors:
+// ErrBadRequest,
+// ErrConflict
+// ErrForbidden
+// ErrUnathenticated
+// errorf
+func (s *service) UpdateAccount(ctx context.Context, user *User) error {
+	if err := requireSelf(ctx, user.ID); err != nil {
+		return err
+	}
+
+	if err := validateAccountBusinessRules(user); err != nil {
+		return err
+	}
+
+	err := s.repo.Update(ctx, user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *service) DeleteAccount(ctx context.Context, id uuid.UUID) error {
 	if err := requireSelf(ctx, id); err != nil {
 		return err
@@ -106,6 +159,11 @@ func (s *service) DeleteAccount(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
+// errors:
+// ErrUnathenticated,
+// ErrForbidden,
+// ErrConflict,
+// errorf
 func (s *service) DeactivateAccount(ctx context.Context, id uuid.UUID) error {
 	if err := requireSelf(ctx, id); err != nil {
 		return err
@@ -123,7 +181,7 @@ func (s *service) DeactivateAccount(ctx context.Context, id uuid.UUID) error {
 
 	err = s.repo.Update(ctx, user)
 	if err != nil {
-		return fmt.Errorf("deactivating account: %w", err)
+		return err
 	}
 
 	return nil
