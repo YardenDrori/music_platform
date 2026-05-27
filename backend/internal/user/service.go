@@ -26,7 +26,7 @@ type passwordHasher interface {
 type Service interface {
 	NewAccount(ctx context.Context, user *NewUserRequest) error
 
-	// Authenticate(ctx context.Context, identifier string) (*User, error)
+	Authenticate(ctx context.Context, identifier string, password string) (*User, error)
 
 	// errors:
 	// [ErrUnathenticated]

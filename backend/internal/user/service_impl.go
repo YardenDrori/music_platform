@@ -2,9 +2,9 @@ package user
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
@@ -13,12 +13,14 @@ import (
 )
 
 type service struct {
-	repo repository
+	repo           repository
+	passwordHasher passwordHasher
 }
 
-func NewService(repo repository) Service {
+func NewService(repo repository, hasher passwordHasher) Service {
 	return &service{
-		repo: repo,
+		repo:           repo,
+		passwordHasher: hasher,
 	}
 }
 
@@ -60,61 +62,79 @@ func validateAccountBusinessRules(user *User) error {
 	return nil
 }
 
-func (s *service) AuthenticateViaEmail(ctx context.Context, email string, hasher ) error {
-	user, err := s.FindByEmail(ctx, email)
+func (s *service) NewAccount(ctx context.Context, user *NewUserRequest) error {
+	passHash := s.passwordHasher.hashPassword(user.Password)
+	newUser := &User{
+		ID:           user.ID,
+		Username:     user.Username,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		PasswordHash: passHash,
+		CreatedAt:    time.Now().UTC(),
+		Active:       true,
+	}
 
-	if errors.Is(err, ErrNotFound) {
-		return ErrUnauthenticated
-	}
-	if err != nil {
-		return fmt.Errorf("authenticating via email: %w", err)
-	}
-
-	ok, err := s.passwordHasher.verifyPassword(req.Password, user.PasswordHash)
-	if err != nil {
-		return nil, nil, fmt.Errorf("verifying password: %w", err)
-	}
-	if !ok {
-		return nil, nil, ErrUnauthenticated
-	}
-}
-
-func (s *service) NewAccount(ctx context.Context, user *User) error {
-	if err := validateAccountBusinessRules(user); err != nil {
+	if err := validateAccountBusinessRules(newUser); err != nil {
 		return err
 	}
 
 	//TODO: ping email provider and send verification email here
 
-	err := s.repo.Create(ctx, user)
+	err := s.repo.Create(ctx, newUser)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating user account: %w", err)
 	}
 
 	return nil
 }
 
-func (s *service) FindByEmail(ctx context.Context, email string) (*User, error) {
+func (s *service) Authenticate(
+	ctx context.Context,
+	identifier string,
+	password string,
+) (*User, error) {
+	var user *User
+	var err error
+	if strings.Contains(identifier, "@") {
+		user, err = s.findByEmail(ctx, identifier)
+	} else {
+		user, err = s.findByUsername(ctx, identifier)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("authenticating user: %w", err)
+	}
+
+	passwordsMatch, err := s.passwordHasher.verifyPassword(password, user.PasswordHash)
+	if err != nil {
+		return nil, fmt.Errorf("authenticating user: %w", err)
+	}
+	if passwordsMatch {
+		return user, nil
+	}
+	return nil, ErrUnauthenticated
+}
+
+func (s *service) findByEmail(ctx context.Context, email string) (*User, error) {
 	if email == "" {
 		return nil, &ErrBadRequest{Message: "email not provided"}
 	}
 
 	user, err := s.repo.FindByEmail(ctx, email)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("finding user by email: %w", err)
 	}
 
 	return user, nil
 }
 
-func (s *service) FindByUsername(ctx context.Context, username string) (*User, error) {
+func (s *service) findByUsername(ctx context.Context, username string) (*User, error) {
 	if username == "" {
 		return nil, &ErrBadRequest{Message: "username not provided"}
 	}
 
 	user, err := s.repo.FindByUsername(ctx, username)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("finding user by username: %w", err)
 	}
 
 	return user, nil
@@ -132,7 +152,7 @@ func (s *service) FindByUUID(ctx context.Context, id uuid.UUID) (*User, error) {
 
 	user, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("finding user by id: %w", err)
 	}
 
 	return user, nil
@@ -144,18 +164,45 @@ func (s *service) FindByUUID(ctx context.Context, id uuid.UUID) (*User, error) {
 // ErrForbidden
 // ErrUnathenticated
 // errorf
-func (s *service) UpdateAccount(ctx context.Context, user *User) error {
+func (s *service) UpdateAccount(ctx context.Context, user *NewUserRequest) error {
 	if err := requireSelf(ctx, user.ID); err != nil {
 		return err
 	}
 
-	if err := validateAccountBusinessRules(user); err != nil {
+	currUserInfo, err := s.FindByUUID(ctx, user.ID)
+	if err != nil {
+		return fmt.Errorf("updating user profile: fetching account info: %w", err)
+	}
+
+	passwordsMatch, err := s.passwordHasher.verifyPassword(user.Password, currUserInfo.PasswordHash)
+	if err != nil {
+		return fmt.Errorf("updating user profile: checking if passwords match: %w", err)
+	}
+
+	var newPass string
+	if passwordsMatch {
+		newPass = currUserInfo.PasswordHash
+	} else {
+		newPass = s.passwordHasher.hashPassword(user.Password)
+	}
+
+	updatedUser := &User{
+		ID:           user.ID,
+		Username:     user.Username,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		PasswordHash: newPass,
+		CreatedAt:    currUserInfo.CreatedAt,
+		Active:       currUserInfo.Active,
+	}
+
+	if err := validateAccountBusinessRules(updatedUser); err != nil {
 		return err
 	}
 
-	err := s.repo.Update(ctx, user)
+	err = s.repo.Update(ctx, updatedUser)
 	if err != nil {
-		return err
+		return fmt.Errorf("updating user account: %w", err)
 	}
 
 	return nil
@@ -168,7 +215,7 @@ func (s *service) DeleteAccount(ctx context.Context, id uuid.UUID) error {
 
 	err := s.repo.Delete(ctx, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("deleting user account: %w", err)
 	}
 
 	return nil
@@ -186,17 +233,14 @@ func (s *service) DeactivateAccount(ctx context.Context, id uuid.UUID) error {
 
 	user, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return err
-		}
-		return fmt.Errorf("fetching account info for deactivation: %w", err)
+		return fmt.Errorf("fetching account for deactivation: %w", err)
 	}
 
 	user.Active = false
 
 	err = s.repo.Update(ctx, user)
 	if err != nil {
-		return err
+		return fmt.Errorf("deactivating user account: %w", err)
 	}
 
 	return nil
