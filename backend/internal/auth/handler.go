@@ -77,7 +77,7 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	resp, user, err := h.service.Login(r.Context(), &req)
 
-	if errors.Is(err, ErrUnauthorized) {
+	if errors.Is(err, ErrUnauthenticated) {
 		writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}

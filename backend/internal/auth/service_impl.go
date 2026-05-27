@@ -132,7 +132,7 @@ func (s *service) Login(
 	}
 
 	if errors.Is(err, ErrNotFound) {
-		return nil, nil, ErrUnauthorized
+		return nil, nil, ErrUnauthenticated
 	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("logging in: %w", err)
@@ -143,7 +143,7 @@ func (s *service) Login(
 		return nil, nil, fmt.Errorf("verifying password: %w", err)
 	}
 	if !ok {
-		return nil, nil, ErrUnauthorized
+		return nil, nil, ErrUnauthenticated
 	}
 
 	//authorized - making tokens

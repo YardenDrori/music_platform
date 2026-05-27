@@ -8,7 +8,7 @@ var ErrNotFound = errors.New("not found")
 
 var ErrConflict = errors.New("conflict")
 
-var ErrUnauthorized = errors.New("incorrect username or password")
+var ErrUnauthenticated = errors.New("incorrect username or password")
 
 var ErrBadToken = errors.New("token invalid or expired")
 
