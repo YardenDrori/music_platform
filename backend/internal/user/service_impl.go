@@ -81,10 +81,6 @@ func (s *service) FindByEmail(ctx context.Context, email string) (*User, error) 
 		return nil, err
 	}
 
-	if err = requireSelf(ctx, user.ID); err != nil {
-		return nil, err
-	}
-
 	return user, nil
 }
 
@@ -95,10 +91,6 @@ func (s *service) FindByUsername(ctx context.Context, username string) (*User, e
 
 	user, err := s.repo.FindByUsername(ctx, username)
 	if err != nil {
-		return nil, err
-	}
-
-	if err = requireSelf(ctx, user.ID); err != nil {
 		return nil, err
 	}
 
