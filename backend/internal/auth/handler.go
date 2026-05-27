@@ -114,6 +114,7 @@ func (h *handler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
 	refreshToken := r.Header.Get("refresh-token")
 	if refreshToken == "" {
 		writeError(w, http.StatusBadRequest, "refresh-token header not included")
+		return
 	}
 
 	tokens, err := h.service.RequestAccessToken(r.Context(), refreshToken)
@@ -124,6 +125,7 @@ func (h *handler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
 			slog.Error("getting access token: ", "error", err)
 			writeInternalError(w)
 		}
+		return
 	}
 
 	http.SetCookie(w, &http.Cookie{
