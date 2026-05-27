@@ -23,12 +23,12 @@ func NewService(repo repository) Service {
 }
 
 // errors:
-// [ErrUnathenticated]
+// [ErrUnauthenticated]
 // [ErrForbidden]
 func requireSelf(ctx context.Context, id uuid.UUID) error {
 	requesterID, ok := identity.UserIDFromContext(ctx)
 	if !ok {
-		return ErrUnathenticated
+		return ErrUnauthenticated
 	}
 	if id != requesterID {
 		return ErrForbidden
@@ -46,6 +46,11 @@ func validateAccountBusinessRules(user *User) error {
 		utf8.RuneCountInString(user.PasswordHash) < 32 {
 		return &ErrBadRequest{Message: "fields missing or too short"}
 	}
+	//user verif pain here
+	if strings.Contains(user.Username, "@") {
+		return &ErrBadRequest{Message: "invalid username"}
+	}
+
 	//email verif pain here!
 	emailPrefix, emailPostfix, ok := strings.Cut(user.Email, "@")
 	if !ok || emailPrefix == "" || emailPostfix == "" || !strings.Contains(emailPostfix, ".") ||
@@ -53,6 +58,25 @@ func validateAccountBusinessRules(user *User) error {
 		return &ErrBadRequest{Message: "invalid email address"}
 	}
 	return nil
+}
+
+func (s *service) AuthenticateViaEmail(ctx context.Context, email string, hasher ) error {
+	user, err := s.FindByEmail(ctx, email)
+
+	if errors.Is(err, ErrNotFound) {
+		return ErrUnauthenticated
+	}
+	if err != nil {
+		return fmt.Errorf("authenticating via email: %w", err)
+	}
+
+	ok, err := s.passwordHasher.verifyPassword(req.Password, user.PasswordHash)
+	if err != nil {
+		return nil, nil, fmt.Errorf("verifying password: %w", err)
+	}
+	if !ok {
+		return nil, nil, ErrUnauthenticated
+	}
 }
 
 func (s *service) NewAccount(ctx context.Context, user *User) error {
@@ -68,7 +92,6 @@ func (s *service) NewAccount(ctx context.Context, user *User) error {
 	}
 
 	return nil
-
 }
 
 func (s *service) FindByEmail(ctx context.Context, email string) (*User, error) {
@@ -98,7 +121,7 @@ func (s *service) FindByUsername(ctx context.Context, username string) (*User, e
 }
 
 // errors:
-// [ErrUnathenticated]
+// [ErrUnauthenticated]
 // [ErrForbidden]
 // [ErrNotFound]
 // [errorf]

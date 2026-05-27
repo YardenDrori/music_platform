@@ -8,7 +8,7 @@ var ErrNotFound = errors.New("not found")
 
 var ErrConflict = errors.New("conflict")
 
-var ErrUnathenticated = errors.New("unauthenticated")
+var ErrUnauthenticated = errors.New("unauthenticated")
 
 var ErrForbidden = errors.New("forbidden")
 

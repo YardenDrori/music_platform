@@ -40,7 +40,7 @@ func (h *handler) GetMe(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case err == nil:
 		break
-	case errors.Is(err, ErrUnathenticated):
+	case errors.Is(err, ErrUnauthenticated):
 		writeError(w, http.StatusUnauthorized, "Unauthenticated")
 		return
 	case errors.Is(err, ErrForbidden):
@@ -76,7 +76,7 @@ func (h *handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, ErrForbidden):
 		writeError(w, http.StatusForbidden, "Forbidden")
 		return
-	case errors.Is(err, ErrUnathenticated):
+	case errors.Is(err, ErrUnauthenticated):
 		writeError(w, http.StatusUnauthorized, "Unauthenticated")
 		return
 	default:
@@ -100,7 +100,7 @@ func (h *handler) DisableMe(w http.ResponseWriter, r *http.Request) {
 
 	err := h.service.DeactivateAccount(r.Context(), id)
 	switch {
-	case errors.Is(err, ErrUnathenticated):
+	case errors.Is(err, ErrUnauthenticated):
 		writeError(w, http.StatusUnauthorized, "Unauthenticated")
 	case errors.Is(err, ErrForbidden):
 		writeError(w, http.StatusForbidden, "Forbidden")
