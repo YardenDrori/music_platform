@@ -16,3 +16,12 @@ type User struct {
 	CreatedAt    time.Time `json:"createdAt"`
 	Active       bool      `json:"-"`
 }
+
+type NewUserRequest struct {
+	ID        uuid.UUID
+	Email     string
+	Username  string
+	FirstName string
+	LastName  string
+	Password  string
+}
