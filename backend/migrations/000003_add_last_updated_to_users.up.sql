@@ -1,0 +1,13 @@
+ALTER TABLE users ADD COLUMN last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW() AT TIME ZONE 'UTC';
+
+CREATE OR REPLACE FUNCTION set_last_updated()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.last_updated = NOW() AT TIME ZONE 'UTC';
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER users_set_last_updated
+BEFORE UPDATE ON users
+FOR EACH ROW EXECUTE FUNCTION set_last_updated();

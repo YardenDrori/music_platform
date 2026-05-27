@@ -13,8 +13,9 @@ type User struct {
 	FirstName    string    `json:"firstName"`
 	LastName     string    `json:"lastName"`
 	PasswordHash string    `json:"-"`
-	CreatedAt    time.Time `json:"createdAt"`
-	Active       bool      `json:"-"`
+	CreatedAt   time.Time `json:"createdAt"`
+	LastUpdated time.Time `json:"lastUpdated"`
+	Active      bool      `json:"-"`
 }
 
 type NewUserRequest struct {

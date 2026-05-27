@@ -74,11 +74,11 @@ func (r *postgresRepository) Delete(ctx context.Context, id uuid.UUID) error {
 func (r *postgresRepository) FindByEmail(ctx context.Context, email string) (*User, error) {
 	u := &User{}
 	err := r.db.QueryRow(ctx,
-		`SELECT id, email, username, first_name, last_name, 
-		password_hash, created_at, is_active FROM users WHERE email = $1`,
+		`SELECT id, email, username, first_name, last_name,
+		password_hash, created_at, last_updated, is_active FROM users WHERE email = $1`,
 		email,
 	).Scan(&u.ID, &u.Email, &u.Username, &u.FirstName, &u.LastName,
-		&u.PasswordHash, &u.CreatedAt, &u.Active)
+		&u.PasswordHash, &u.CreatedAt, &u.LastUpdated, &u.Active)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -97,10 +97,10 @@ func (r *postgresRepository) FindByID(ctx context.Context, id uuid.UUID) (*User,
 	u := &User{}
 	err := r.db.QueryRow(ctx,
 		`SELECT id, email, username, first_name, last_name,
-		password_hash, created_at, is_active FROM users WHERE id = $1`,
+		password_hash, created_at, last_updated, is_active FROM users WHERE id = $1`,
 		id,
 	).Scan(&u.ID, &u.Email, &u.Username, &u.FirstName, &u.LastName,
-		&u.PasswordHash, &u.CreatedAt, &u.Active)
+		&u.PasswordHash, &u.CreatedAt, &u.LastUpdated, &u.Active)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -116,10 +116,10 @@ func (r *postgresRepository) FindByUsername(ctx context.Context, username string
 	u := &User{}
 	err := r.db.QueryRow(ctx,
 		`SELECT id, email, username, first_name, last_name,
-		password_hash, created_at, is_active FROM users WHERE username = $1`,
+		password_hash, created_at, last_updated, is_active FROM users WHERE username = $1`,
 		username,
 	).Scan(&u.ID, &u.Email, &u.Username, &u.FirstName, &u.LastName,
-		&u.PasswordHash, &u.CreatedAt, &u.Active)
+		&u.PasswordHash, &u.CreatedAt, &u.LastUpdated, &u.Active)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
