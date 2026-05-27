@@ -3,20 +3,7 @@ import type {
   LoginRequest,
   RegisterRequest,
 } from "../types/auth";
-
-async function validateResponse(resp: Response): Promise<any> {
-  if (resp.status >= 500) {
-    throw new Error("internal server error");
-  }
-
-  const respJson = await resp.json();
-
-  if (!resp.ok) {
-    throw new Error(respJson.error);
-  }
-
-  return respJson;
-}
+import { validateResponse } from "../utils";
 
 export async function register(req: RegisterRequest): Promise<AuthResponse> {
   const response = await fetch("/api/register", {

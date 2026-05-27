@@ -15,3 +15,17 @@ export function verifyValidEmail(email: string): boolean {
 
   return true;
 }
+
+export async function validateResponse(resp: Response): Promise<any> {
+  if (resp.status >= 500) {
+    throw new Error("internal server error");
+  }
+
+  const respJson = await resp.json();
+
+  if (!resp.ok) {
+    throw new Error(respJson.error);
+  }
+
+  return respJson;
+}
