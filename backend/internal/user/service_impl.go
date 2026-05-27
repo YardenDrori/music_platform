@@ -8,6 +8,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/google/uuid"
+
+	"github.com/YardenDrori/music-platform/internal/identity"
 )
 
 type service struct {
@@ -18,6 +20,17 @@ func NewService(repo repository) Service {
 	return &service{
 		repo: repo,
 	}
+}
+
+func requireSelf(ctx context.Context, id uuid.UUID) error {
+	requesterID, ok := identity.UserIDFromContext(ctx)
+	if !ok {
+		return ErrUnathenticated
+	}
+	if id != requesterID {
+		return ErrForbidden
+	}
+	return nil
 }
 
 func (s *service) NewAccount(ctx context.Context, user *User) error {
@@ -47,7 +60,6 @@ func (s *service) NewAccount(ctx context.Context, user *User) error {
 }
 
 func (s *service) FindByEmail(ctx context.Context, email string) (*User, error) {
-	//TODO: add accesstoken requirement
 	if email == "" {
 		return nil, &ErrBadRequest{Message: "email not provided"}
 	}
@@ -57,11 +69,14 @@ func (s *service) FindByEmail(ctx context.Context, email string) (*User, error) 
 		return nil, err
 	}
 
+	if err = requireSelf(ctx, user.ID); err != nil {
+		return nil, err
+	}
+
 	return user, nil
 }
 
 func (s *service) FindByUsername(ctx context.Context, username string) (*User, error) {
-	//TODO: add accesstoken requirement
 	if username == "" {
 		return nil, &ErrBadRequest{Message: "username not provided"}
 	}
@@ -71,11 +86,17 @@ func (s *service) FindByUsername(ctx context.Context, username string) (*User, e
 		return nil, err
 	}
 
+	if err = requireSelf(ctx, user.ID); err != nil {
+		return nil, err
+	}
+
 	return user, nil
 }
 
 func (s *service) DeleteAccount(ctx context.Context, id uuid.UUID) error {
-	//TODO: add ADMIN accesstoken requirement
+	if err := requireSelf(ctx, id); err != nil {
+		return err
+	}
 
 	err := s.repo.Delete(ctx, id)
 	if err != nil {
@@ -86,7 +107,9 @@ func (s *service) DeleteAccount(ctx context.Context, id uuid.UUID) error {
 }
 
 func (s *service) DeactivateAccount(ctx context.Context, id uuid.UUID) error {
-	//TODO: add accesstoken requirement
+	if err := requireSelf(ctx, id); err != nil {
+		return err
+	}
 
 	user, err := s.repo.FindByID(ctx, id)
 	if err != nil {
