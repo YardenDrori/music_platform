@@ -62,7 +62,7 @@ func validateAccountBusinessRules(user *User) error {
 	return nil
 }
 
-func (s *service) NewAccount(ctx context.Context, user *NewUserRequest) error {
+func (s *service) NewAccount(ctx context.Context, user *NewUserRequest) (*User, error) {
 	passHash := s.passwordHasher.hashPassword(user.Password)
 	newUser := &User{
 		ID:           user.ID,
@@ -75,17 +75,17 @@ func (s *service) NewAccount(ctx context.Context, user *NewUserRequest) error {
 	}
 
 	if err := validateAccountBusinessRules(newUser); err != nil {
-		return err
+		return nil, err
 	}
 
 	//TODO: ping email provider and send verification email here
 
 	err := s.repo.Create(ctx, newUser)
 	if err != nil {
-		return fmt.Errorf("creating user account: %w", err)
+		return nil, fmt.Errorf("creating user account: %w", err)
 	}
 
-	return nil
+	return newUser, nil
 }
 
 func (s *service) Authenticate(
