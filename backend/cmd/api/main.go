@@ -88,6 +88,10 @@ func run() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/register", authHandler.Register)
 	mux.HandleFunc("POST /api/login", authHandler.Login)
+	mux.HandleFunc("POST /api/token", authHandler.GetAccessToken)
+	mux.HandleFunc("GET /api/me", requireAuth(userHandler.GetMe))
+	mux.HandleFunc("PATCH /api/me", requireAuth(userHandler.UpdateMe))
+	mux.HandleFunc("DELETE /api/me", requireAuth(userHandler.DisableMe))
 
 	log.Println("server starting on :8080")
 	return http.ListenAndServe(":8080", mux)
