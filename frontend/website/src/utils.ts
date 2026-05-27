@@ -34,8 +34,8 @@ export async function validateEmptyResponse(resp: Response): Promise<void> {
   if (resp.status >= 500) {
     throw new Error("Internal server error");
   }
-  const respJson = await resp.json();
   if (!resp.ok) {
+    const respJson = await resp.json();
     throw new Error(respJson?.error ?? "unkown error");
   }
 }
