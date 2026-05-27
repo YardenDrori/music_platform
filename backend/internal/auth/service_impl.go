@@ -15,19 +15,17 @@ import (
 )
 
 type service struct {
-	userService    user.Service
-	repo           repository
-	passwordHasher passwordHasher
-	tokenHasher    tokenHasher
-	tokenizer      tokenizer
+	userService user.Service
+	repo        repository
+	tokenHasher tokenHasher
+	tokenizer   tokenizer
 }
 
 func NewService(repo repository, tok tokenizer, userService user.Service) *service {
 	return &service{
-		repo:           repo,
-		passwordHasher: &argon2idPasswordHasher{},
-		tokenizer:      tok,
-		userService:    userService,
+		repo:        repo,
+		tokenizer:   tok,
+		userService: userService,
 	}
 }
 
@@ -62,8 +60,6 @@ func (s *service) Register(
 	if utf8.RuneCountInString(req.Password) < 8 {
 		return nil, nil, &ErrBadRequest{Message: "password too short"}
 	}
-
-	passwordHash := s.passwordHasher.hashPassword(req.Password)
 
 	newUser := user.User{
 		ID:           uuid.New(),

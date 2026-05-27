@@ -35,11 +35,6 @@ type tokenizer interface {
 	GenerateTokenPair(userId uuid.UUID) (*tokenPair, error)
 }
 
-type passwordHasher interface {
-	hashPassword(password string) string
-	verifyPassword(password string, hashedPassword string) (bool, error)
-}
-
 type tokenHasher interface {
 	hashToken(token string) string
 }
