@@ -61,23 +61,29 @@ func (s *service) Register(
 		return nil, nil, &ErrBadRequest{Message: "password too short"}
 	}
 
-	newUser := user.User{
-		ID:           uuid.New(),
-		Email:        req.Email,
-		Username:     req.UserName,
-		FirstName:    req.FirstName,
-		LastName:     req.LastName,
-		PasswordHash: passwordHash,
-		CreatedAt:    time.Now().UTC(),
-		Active:       true,
+	newUserReq := user.NewUserRequest{
+		ID:        uuid.New(),
+		Email:     req.Email,
+		Username:  req.UserName,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Password:  req.Password,
 	}
 
-	tokens, err := s.tokenizer.GenerateTokenPair(newUser.ID)
+	tokens, err := s.tokenizer.GenerateTokenPair(newUserReq.ID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("registering: %w", err)
 	}
 
-	repoErr := s.userService.NewAccount(ctx, &newUser)
+	var repoErr error
+	var newUser *user.User
+	for range 3 {
+		newUser, repoErr = s.userService.NewAccount(ctx, &newUserReq)
+		if !errors.Is(repoErr, ErrConflict) {
+			break
+		}
+		slog.Info("congratulation you should take a lottery ticket now!")
+	}
 	switch {
 	case repoErr == nil:
 		break
@@ -90,7 +96,7 @@ func (s *service) Register(
 	for range 3 {
 		err = s.repo.NewToken(
 			ctx,
-			newUser.ID,
+			newUserReq.ID,
 			tokens.hashedRefreshToken,
 			time.Now().UTC(),
 			time.Now().UTC().Add(tokens.refreshDur),
@@ -108,7 +114,7 @@ func (s *service) Register(
 		accessToken:    tokens.accessToken,
 		refreshToken:   tokens.rawRefreshToken,
 		refreshExpirey: time.Now().UTC().Add(tokens.refreshDur),
-	}, &newUser, nil
+	}, newUser, nil
 }
 
 // errors:
@@ -124,26 +130,17 @@ func (s *service) Login(
 
 	switch {
 	case req.Email != nil && *req.Email != "":
-		user, err = s.userService.FindByEmail(ctx, *req.Email)
+		user, err = s.userService.Authenticate(ctx, *req.Email, req.Password)
 	case req.UserName != nil && *req.UserName != "":
-		user, err = s.userService.FindByUsername(ctx, *req.UserName)
+		user, err = s.userService.Authenticate(ctx, *req.UserName, req.Password)
 	default:
 		return nil, nil, &ErrBadRequest{Message: "missing credentials"}
 	}
-
 	if errors.Is(err, ErrNotFound) {
 		return nil, nil, ErrUnauthenticated
 	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("logging in: %w", err)
-	}
-
-	ok, err := s.passwordHasher.verifyPassword(req.Password, user.PasswordHash)
-	if err != nil {
-		return nil, nil, fmt.Errorf("verifying password: %w", err)
-	}
-	if !ok {
-		return nil, nil, ErrUnauthenticated
 	}
 
 	//authorized - making tokens
