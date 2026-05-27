@@ -22,6 +22,10 @@ const (
 
 type argon2idPasswordHasher struct{}
 
+func NewArgon2idPasswordHasher() *argon2idPasswordHasher {
+	return &argon2idPasswordHasher{}
+}
+
 func (h *argon2idPasswordHasher) hashPassword(password string) string {
 	salt := rand.Text() //returns 26 runes with at least 128 bits of entropy
 	for utf8.RuneCount([]byte(salt)) < argonSaltLen {

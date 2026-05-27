@@ -72,7 +72,7 @@ func run() error {
 	slog.Info("refresh token duration", "duration", refreshTokenDur)
 
 	//==========User==========
-	userService := user.NewService(user.NewPostgresRepository(db))
+	userService := user.NewService(user.NewPostgresRepository(db), user.NewArgon2idPasswordHasher())
 	userHandler := user.NewHandler(userService)
 
 	//==========Auth==========
