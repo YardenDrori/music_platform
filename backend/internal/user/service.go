@@ -18,10 +18,15 @@ type repository interface {
 	FindByUsername(ctx context.Context, u string) (*User, error)
 }
 
+type passwordHasher interface {
+	hashPassword(password string) string
+	verifyPassword(password string, hashedPassword string) (bool, error)
+}
+
 type Service interface {
-	NewAccount(ctx context.Context, user *User) error
-	FindByEmail(ctx context.Context, email string) (*User, error)
-	FindByUsername(ctx context.Context, username string) (*User, error)
+	NewAccount(ctx context.Context, user *NewUserRequest) error
+
+	// Authenticate(ctx context.Context, identifier string) (*User, error)
 
 	// errors:
 	// [ErrUnathenticated]
@@ -36,7 +41,7 @@ type Service interface {
 	// ErrForbidden
 	// ErrUnathenticated
 	// errorf
-	UpdateAccount(ctx context.Context, user *User) error
+	UpdateAccount(ctx context.Context, user *NewUserRequest) error
 
 	DeleteAccount(ctx context.Context, id uuid.UUID) error
 
