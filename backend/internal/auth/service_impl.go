@@ -21,11 +21,12 @@ type service struct {
 	tokenizer   tokenizer
 }
 
-func NewService(repo repository, tok tokenizer, userService user.Service) *service {
+func NewService(repo repository, tok tokenizer, userService user.Service) Service {
 	return &service{
-		repo:        repo,
-		tokenizer:   tok,
 		userService: userService,
+		repo:        repo,
+		tokenHasher: &sha256TokenHasher{},
+		tokenizer:   tok,
 	}
 }
 
