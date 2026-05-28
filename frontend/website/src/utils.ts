@@ -36,5 +36,38 @@ export async function validateResponse(resp: Response): Promise<any> {
   return body;
 }
 
+export async function authenticatedFetch(
+  url: string,
+  params: RequestInit,
+): Promise<any> {
+  const makeRequest = async (): Promise<any> => {
+    const token = getAccessToken();
+    if (!token) {
+      throw new Error("called AuthenticatedFetch without a token");
+    }
+
+    return fetch(url, {
+      ...params,
+      headers: {
+        ...params.headers,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  };
+
+  let resp = await makeRequest();
+
+  if (resp.status === 401) {
+    try {
+      await renewAccessToken();
+      return await validateResponse(await makeRequest());
+    } catch (e) {
+      throw new Error(
+        `making an authenticatedFetch request to ${url}, ${params}`,
+        { cause: e },
+      );
+    }
   }
+
+  return validateResponse(resp);
 }
