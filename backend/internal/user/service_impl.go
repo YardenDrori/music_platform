@@ -66,11 +66,13 @@ func (s *service) NewAccount(ctx context.Context, user *NewUserRequest) (*User, 
 	passHash := s.passwordHasher.hashPassword(user.Password)
 	newUser := &User{
 		ID:           user.ID,
+		Email:        user.Email,
 		Username:     user.Username,
 		FirstName:    user.FirstName,
 		LastName:     user.LastName,
 		PasswordHash: passHash,
 		CreatedAt:    time.Now().UTC(),
+		LastUpdated:  time.Now().UTC(),
 		Active:       true,
 	}
 
