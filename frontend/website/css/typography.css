@@ -1,14 +1,12 @@
 @font-face {
   font-family: "Junicode";
-  src: url("../fonts/Junicode_2.224/Junicode/WOFF2/JunicodeVF-Roman.woff2")
-    format("woff2");
+  src: url("../fonts/Junicode/JunicodeVF-Roman.woff2") format("woff2");
   font-style: normal;
 }
 
 @font-face {
   font-family: "Junicode";
-  src: url("../fonts/Junicode_2.224/Junicode/WOFF2/JunicodeVF-Italic.woff2")
-    format("woff2");
+  src: url("../fonts/Junicode/JunicodeVF-Italic.woff2") format("woff2");
   font-style: italic;
 }
 
