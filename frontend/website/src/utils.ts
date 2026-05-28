@@ -1,3 +1,6 @@
+import { renewAccessToken } from "./api/auth";
+import { getAccessToken } from "./state";
+
 export function verifyValidEmail(email: string): boolean {
   const identifierParts = email.split("@");
 
@@ -21,21 +24,17 @@ export async function validateResponse(resp: Response): Promise<any> {
     throw new Error("Internal server error");
   }
 
-  const respJson = await resp.json();
+  let body: any = null;
+  try {
+    body = await resp.json();
+  } catch (_) {}
 
   if (!resp.ok) {
-    throw new Error(respJson?.error ?? "unkown error");
+    throw new Error(body?.error ?? "unknown error");
   }
 
-  return respJson;
+  return body;
 }
 
-export async function validateEmptyResponse(resp: Response): Promise<void> {
-  if (resp.status >= 500) {
-    throw new Error("Internal server error");
-  }
-  if (!resp.ok) {
-    const respJson = await resp.json();
-    throw new Error(respJson?.error ?? "unkown error");
   }
 }
