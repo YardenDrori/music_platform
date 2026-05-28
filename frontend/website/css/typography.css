@@ -36,3 +36,22 @@
     format("truetype");
   font-style: italic;
 }
+
+:root {
+  --font-display: "Junicode", serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrainsMono", monospace;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+}
