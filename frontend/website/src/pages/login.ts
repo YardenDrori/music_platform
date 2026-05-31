@@ -60,8 +60,7 @@ export function renderLogin(): void {
       if (identifier.includes("@")) {
         //email
         if (!verifyValidEmail(identifier)) {
-          document.querySelector("#form-message")!.textContent =
-            "Invalid Email address";
+          showErrorOnForm("Invalid email address");
           return;
         }
 
@@ -87,8 +86,7 @@ export function renderLogin(): void {
         window.history.pushState({}, "", "/");
         route();
       } catch (e) {
-        document.getElementById("form-message")!.textContent =
-          "" + (e as Error).message;
+        showErrorOnForm((e as Error).message);
         return;
       }
 
@@ -100,4 +98,18 @@ export function renderLogin(): void {
     window.history.pushState({}, "", "/register");
     route();
   });
+}
+
+function showErrorOnForm(message: string) {
+  const errMsg = document.getElementById("form-message");
+  if (errMsg) {
+    errMsg.remove();
+  }
+
+  const newMsg = document.createElement("p");
+  newMsg.id = "form-message";
+  newMsg.className = "login__form-message";
+  newMsg.textContent = message;
+
+  document.getElementById("form-message-div")!.appendChild(newMsg);
 }
