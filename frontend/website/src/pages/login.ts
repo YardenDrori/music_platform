@@ -34,6 +34,17 @@ export function renderLogin(): void {
   </div>
   `;
 
+  const updateButton = () => {
+    (document.querySelector("[type='submit']") as HTMLButtonElement).disabled =
+      !(document.getElementById("identifier") as HTMLInputElement).value ||
+      !(document.getElementById("password") as HTMLInputElement).value;
+  };
+  updateButton();
+
+  document.querySelectorAll(".login__form-textbox").forEach((input) => {
+    input.addEventListener("input", updateButton);
+  });
+
   document
     .querySelector("#login-form")!
     .addEventListener("submit", async (e) => {
