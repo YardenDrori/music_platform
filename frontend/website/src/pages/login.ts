@@ -1,4 +1,5 @@
 import { login } from "../api/auth";
+import { siteName } from "../constants";
 import { route } from "../router";
 import { setAccessToken } from "../state";
 import type { AuthResponse, LoginRequest } from "../types/auth";
@@ -6,23 +7,30 @@ import { verifyValidEmail } from "../utils";
 
 export function renderLogin(): void {
   document.querySelector("#app")!.innerHTML = `
-  <div>
-    <form id="login-form">
-      <h1>Welcome back! Please login.</h1>
+  <div class="page-centered">
+    <div class="login">
+      <div class="login__logo"></div>
 
-      <div>
-        <label for="identifier">Email or username</label>
-        <input type="text" id="identifier" name="identifier" required />
-      </div>
-      <div>
-        <label for="password">password</label>
-        <input type="password" id="password" name="password" required />
-      </div>
+      <h1 class="login__heading">Sign in with ${siteName} account</h1>
 
-      <p id="form-message"></p>
-      <button type="submit">Login</button>
-    </form>
-    <button type="button" id="register-button">Register</button>
+      <form id="login-form" class="login__form">
+        <div class="login__form-text-inputs">
+          <div class="login__input-group">
+            <input type="text" id="identifier" name="identifier" class="login__form-textbox"  placeholder=" "/>
+            <label class="login__form-textbox-label">Email or Username</label>
+          </div>
+          <div class="login__input-group">
+            <input type="password" id="password" name="password" class="login__form-textbox" placeholder=" "/>
+            <label class="login__form-textbox-label">Password</label>
+          </div>
+        </div>
+        <button type="button" id="register-button" class="login__register-redirect">Create Your ${siteName} Account</button>
+        <div id="form-message-div"></div>
+
+        <button type="submit" class="login__submit-button">Continue</button>
+      </form>
+
+    </div>
   </div>
   `;
 
