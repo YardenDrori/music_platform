@@ -11,7 +11,7 @@ export function renderLogin(): void {
     <div class="login">
       <div class="login__logo"></div>
 
-      <h1 class="login__heading">Sign in with ${siteName} account</h1>
+      <h1 class="login__heading">Sign In With ${siteName} Account</h1>
 
       <form id="login-form" class="login__form">
         <div class="login__form-text-inputs">
@@ -50,8 +50,6 @@ export function renderLogin(): void {
   updateButton();
 
   const showErrorOnForm = async (message: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
     submitButtonBlocked = true;
     updateButton();
     const submitButton = document.querySelector("[type='submit']")!;
