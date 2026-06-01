@@ -1,4 +1,5 @@
-.login {
+.login,
+.register {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -25,18 +26,20 @@
   background-color: purple;
 }
 
-.login__heading {
+.login__heading,
+.register__heading {
   font-size: 3rem;
   text-align: center;
 }
 
-.login__form {
+.login__form,
+.register__form {
   display: flex;
   flex-direction: column;
 
   align-items: center;
 
-  width: 80%;
+  width: 85%;
 
   flex: 1;
 }
@@ -44,12 +47,42 @@
 .login__form-text-inputs {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
+  width: 100%;
+}
+
+.register__form-text-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.register__related-input-groups-small {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.register__related-input-groups {
+  display: inherit;
+  flex-direction: inherit;
+  gap: inherit;
+  margin-top: 0.8rem;
 }
 
 .login__input-group {
   position: relative;
   height: 3.5rem;
+}
+
+.register__input-group {
+  position: relative;
+  height: 3.5rem;
+}
+.register__input-group-small {
+  position: relative;
+  height: 3.5rem;
+  width: 49%;
 }
 
 .login__form-textbox {
@@ -65,11 +98,29 @@
   font-size: 1.75rem;
 
   width: 100%;
-  min-width: 32rem;
+  min-width: 12rem;
   height: 100%;
 }
 
-.login__form-textbox-label {
+.register__form-textbox {
+  color: var(--subtext0);
+  background-color: var(--surface1);
+
+  padding: 16px;
+  padding-top: 32px;
+
+  border: 1px solid var(--overlay0);
+  border-radius: 16px;
+
+  font-size: 1.75rem;
+
+  width: 100%;
+  min-width: 1rem;
+  height: 100%;
+}
+
+.login__form-textbox-label,
+.register__form-textbox-label {
   color: var(--subtext0);
 
   white-space: nowrap;
@@ -81,7 +132,7 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  left: 18px;
+  left: 6px;
 
   pointer-events: none;
 
@@ -89,7 +140,10 @@
 }
 
 .login__form-textbox:focus + .login__form-textbox-label,
-.login__form-textbox:not(:placeholder-shown) + .login__form-textbox-label {
+.login__form-textbox:not(:placeholder-shown) + .login__form-textbox-label,
+.register__form-textbox:focus + .register__form-textbox-label,
+.register__form-textbox:not(:placeholder-shown)
+  + .register__form-textbox-label {
   font-size: 1rem;
   top: 0;
   transform: translateY(0%);
@@ -123,14 +177,42 @@
   padding: 0;
   margin-right: auto;
   margin-left: 1rem;
-  margin-top: 0.2rem;
+  margin-top: 0.4rem;
 }
 
-.login__register-redirect:hover {
+.register__redirect-message {
+  display: flex;
+  gap: 0;
+  margin-right: auto;
+  margin-top: 0.4rem;
+  margin-left: 1rem;
+}
+
+.register__login-redirect-text {
+  white-space: pre;
+}
+
+.register__login-redirect {
+  background: none;
+  border: none;
+  color: var(--mauve);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0;
+}
+
+.login__register-redirect:hover,
+.register__login-redirect:hover {
   text-decoration: underline;
 }
 
-.login__form-message {
+.register__message-container {
+  margin-bottom: 4rem;
+}
+
+.login__form-message,
+.register__form-message {
   font-size: 1.25rem;
   font-weight: bold;
   font-family: var(--font-mono);
@@ -152,7 +234,10 @@
 
 .login__submit-button,
 .login__submit-button--loading,
-.login__submit-button--failed {
+.login__submit-button--failed,
+.register__submit-button,
+.register__submit-button--loading,
+.register__submit-button--failed {
   color: var(--crust);
   margin-top: auto;
   margin-bottom: 2rem;
@@ -171,22 +256,26 @@
   position: relative;
 }
 
-.login__submit-button:hover:not(.login__submit-button--loading) {
+.login__submit-button:hover:not(.login__submit-button--loading),
+.register__submit-button:hover:not(.register__submit-button--loading) {
   background-color: var(--lavender);
 }
 
-.login__submit-button:active {
+.login__submit-button:active,
+.register__submit-button:active {
   background-color: var(--mauve);
   transform: scale(0.99);
 }
 
-.login__submit-button:disabled {
+.login__submit-button:disabled,
+.register__submit-button:disabled {
   background-color: color-mix(in srgb, var(--mauve) 30%, transparent);
   cursor: not-allowed;
   pointer-events: none;
 }
 
-.login__submit-button--loading {
+.login__submit-button--loading,
+.register__submit-button--loading {
   color: transparent;
   background-color: color-mix(in srgb, var(--mauve) 30%, transparent);
   /* transform: scale(0.99); */
@@ -201,7 +290,8 @@
   }
 }
 
-.login__submit-button--loading::after {
+.login__submit-button--loading::after,
+.register__submit-button--loading::after {
   content: "";
   position: absolute;
 
