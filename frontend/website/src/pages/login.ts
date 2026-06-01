@@ -34,12 +34,41 @@ export function renderLogin(): void {
   </div>
   `;
 
+  let submitButtonBlocked: boolean = false;
+
   const updateButton = () => {
     (document.querySelector("[type='submit']") as HTMLButtonElement).disabled =
       !(document.getElementById("identifier") as HTMLInputElement).value ||
-      !(document.getElementById("password") as HTMLInputElement).value;
+      !(document.getElementById("password") as HTMLInputElement).value ||
+      submitButtonBlocked;
+
+    if (submitButtonBlocked) {
+      submitButtonBlocked = false;
+      return;
+    }
   };
   updateButton();
+
+  const showErrorOnForm = async (message: string) => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    submitButtonBlocked = true;
+    updateButton();
+    const submitButton = document.querySelector("[type='submit']")!;
+    submitButton.classList.remove("login__submit-button--loading");
+
+    const errMsg = document.getElementById("form-message");
+    if (errMsg) {
+      errMsg.remove();
+    }
+
+    const newMsg = document.createElement("p");
+    newMsg.id = "form-message";
+    newMsg.className = "login__form-message";
+    newMsg.textContent = message;
+
+    document.getElementById("form-message-div")!.appendChild(newMsg);
+  };
 
   document.querySelectorAll(".login__form-textbox").forEach((input) => {
     input.addEventListener("input", updateButton);
@@ -49,6 +78,10 @@ export function renderLogin(): void {
     .querySelector("#login-form")!
     .addEventListener("submit", async (e) => {
       e.preventDefault();
+
+      document
+        .querySelector(".login__submit-button")!
+        .classList.add("login__submit-button--loading");
 
       const formData = new FormData(
         document.querySelector("#login-form")! as HTMLFormElement,
@@ -98,18 +131,4 @@ export function renderLogin(): void {
     window.history.pushState({}, "", "/register");
     route();
   });
-}
-
-function showErrorOnForm(message: string) {
-  const errMsg = document.getElementById("form-message");
-  if (errMsg) {
-    errMsg.remove();
-  }
-
-  const newMsg = document.createElement("p");
-  newMsg.id = "form-message";
-  newMsg.className = "login__form-message";
-  newMsg.textContent = message;
-
-  document.getElementById("form-message-div")!.appendChild(newMsg);
 }
