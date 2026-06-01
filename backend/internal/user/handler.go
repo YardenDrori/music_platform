@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/YardenDrori/music-platform/internal/apperrors"
 	"github.com/YardenDrori/music-platform/internal/identity"
 )
 
@@ -40,13 +41,13 @@ func (h *handler) GetMe(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case err == nil:
 		break
-	case errors.Is(err, ErrUnauthenticated):
+	case errors.Is(err, apperrors.ErrUnauthenticated):
 		writeError(w, http.StatusUnauthorized, "Unauthenticated")
 		return
-	case errors.Is(err, ErrForbidden):
+	case errors.Is(err, apperrors.ErrForbidden):
 		writeError(w, http.StatusForbidden, "Forbidden")
 		return
-	case errors.Is(err, ErrNotFound):
+	case errors.Is(err, apperrors.ErrNotFound):
 		writeError(w, http.StatusNotFound, "User not found")
 		return
 	default:
@@ -70,17 +71,17 @@ func (h *handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 
 	err := h.service.UpdateAccount(r.Context(), &newAccount)
 	switch {
-	case errors.Is(err, ErrConflict):
+	case errors.Is(err, apperrors.ErrConflict):
 		writeError(w, http.StatusConflict, "Username or Email aren't available")
 		return
-	case errors.Is(err, ErrForbidden):
+	case errors.Is(err, apperrors.ErrForbidden):
 		writeError(w, http.StatusForbidden, "Forbidden")
 		return
-	case errors.Is(err, ErrUnauthenticated):
+	case errors.Is(err, apperrors.ErrUnauthenticated):
 		writeError(w, http.StatusUnauthorized, "Unauthenticated")
 		return
 	default:
-		if badReq, ok := errors.AsType[*ErrBadRequest](err); ok {
+		if badReq, ok := errors.AsType[*apperrors.ErrBadRequest](err); ok {
 			writeError(w, http.StatusBadRequest, badReq.Message)
 			return
 		}
@@ -100,9 +101,9 @@ func (h *handler) DisableMe(w http.ResponseWriter, r *http.Request) {
 
 	err := h.service.DeactivateAccount(r.Context(), id)
 	switch {
-	case errors.Is(err, ErrUnauthenticated):
+	case errors.Is(err, apperrors.ErrUnauthenticated):
 		writeError(w, http.StatusUnauthorized, "Unauthenticated")
-	case errors.Is(err, ErrForbidden):
+	case errors.Is(err, apperrors.ErrForbidden):
 		writeError(w, http.StatusForbidden, "Forbidden")
 	default:
 		writeInternalError(w)

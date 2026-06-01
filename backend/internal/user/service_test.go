@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+
+	"github.com/YardenDrori/music-platform/internal/apperrors"
 )
 
 type mockRepo struct {
@@ -35,21 +37,21 @@ func (r *mockRepo) FindByEmail(ctx context.Context, email string) (*User, error)
 	if r.findByEmailFn != nil {
 		return r.findByEmailFn(ctx, email)
 	}
-	return nil, ErrNotFound
+	return nil, apperrors.ErrNotFound
 }
 
 func (r *mockRepo) FindByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	if r.findByIDFn != nil {
 		return r.findByIDFn(ctx, id)
 	}
-	return nil, ErrNotFound
+	return nil, apperrors.ErrNotFound
 }
 
 func (r *mockRepo) FindByUsername(ctx context.Context, username string) (*User, error) {
 	if r.findByUsernameFn != nil {
 		return r.findByUsernameFn(ctx, username)
 	}
-	return nil, ErrNotFound
+	return nil, apperrors.ErrNotFound
 }
 
 func TestNewAccount(t *testing.T) {

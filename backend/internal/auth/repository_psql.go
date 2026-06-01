@@ -10,6 +10,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/YardenDrori/music-platform/internal/apperrors"
 )
 
 type postgresRepository struct {
@@ -38,7 +40,7 @@ func (r *postgresRepository) NewToken(
 	}
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		if pgErr.Code == "23505" {
-			return ErrConflict
+			return apperrors.ErrConflict
 		}
 	}
 	return fmt.Errorf("creating token user in postgres db: %w", err)
@@ -57,7 +59,7 @@ func (r *postgresRepository) FindToken(
 		return &owner, nil
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrNotFound
+		return nil, apperrors.ErrNotFound
 	}
 	return nil, fmt.Errorf("verifying token against db: %w", err)
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/YardenDrori/music-platform/internal/apperrors"
 	"github.com/YardenDrori/music-platform/internal/identity"
 )
 
@@ -28,11 +29,11 @@ func NewRequireAuth(
 			}
 
 			claims, err := validator.ValidateAccessToken(r.Context(), token)
-			if errors.Is(err, ErrBadToken) {
+			if errors.Is(err, apperrors.ErrBadToken) {
 				writeError(w, http.StatusUnauthorized, "bad token")
 				return
 			}
-			if msg, ok := errors.AsType[*ErrBadRequest](err); ok {
+			if msg, ok := errors.AsType[*apperrors.ErrBadRequest](err); ok {
 				writeError(w, http.StatusBadRequest, msg.Message)
 				return
 			}

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+
+	"github.com/YardenDrori/music-platform/internal/apperrors"
 )
 
 type handler struct {
@@ -37,7 +39,7 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	resp, newUser, err := h.service.Register(r.Context(), &req)
 	if err != nil {
-		if err, ok := errors.AsType[*ErrBadRequest](err); ok {
+		if err, ok := errors.AsType[*apperrors.ErrBadRequest](err); ok {
 			writeError(w, http.StatusBadRequest, err.Message)
 			return
 		}
@@ -77,16 +79,16 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	resp, user, err := h.service.Login(r.Context(), &req)
 
-	if errors.Is(err, ErrUnauthenticated) {
+	if errors.Is(err, apperrors.ErrUnauthenticated) {
 		writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
-	if err, ok := errors.AsType[*ErrBadRequest](err); ok {
+	if err, ok := errors.AsType[*apperrors.ErrBadRequest](err); ok {
 		writeError(w, http.StatusBadRequest, err.Message)
 		return
 	}
 	if err != nil {
-		slog.Error("logging in: ", "error", err)
+		slog.Error("logging in:", "error", err)
 		writeInternalError(w)
 		return
 	}
@@ -119,7 +121,7 @@ func (h *handler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
 
 	tokens, err := h.service.RequestAccessToken(r.Context(), refreshToken)
 	if err != nil {
-		if errors.Is(err, ErrBadToken) {
+		if errors.Is(err, apperrors.ErrBadToken) {
 			writeError(w, http.StatusUnauthorized, "Bad token")
 		} else {
 			slog.Error("getting access token: ", "error", err)

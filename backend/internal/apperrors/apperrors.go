@@ -1,4 +1,4 @@
-package auth
+package apperrors
 
 import (
 	"errors"
@@ -11,6 +11,8 @@ var ErrConflict = errors.New("conflict")
 var ErrUnauthenticated = errors.New("incorrect username or password")
 
 var ErrBadToken = errors.New("token invalid or expired")
+
+var ErrForbidden = errors.New("forbidden")
 
 type ErrBadRequest struct {
 	Message string

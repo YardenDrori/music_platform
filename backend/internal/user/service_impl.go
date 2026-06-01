@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/YardenDrori/music-platform/internal/apperrors"
 	"github.com/YardenDrori/music-platform/internal/identity"
 )
 
@@ -30,10 +31,10 @@ func NewService(repo repository, hasher passwordHasher) Service {
 func requireSelf(ctx context.Context, id uuid.UUID) error {
 	requesterID, ok := identity.UserIDFromContext(ctx)
 	if !ok {
-		return ErrUnauthenticated
+		return apperrors.ErrUnauthenticated
 	}
 	if id != requesterID {
-		return ErrForbidden
+		return apperrors.ErrForbidden
 	}
 	return nil
 }
@@ -46,18 +47,18 @@ func validateAccountBusinessRules(user *User) error {
 		utf8.RuneCountInString(user.FirstName) < 3 ||
 		utf8.RuneCountInString(user.LastName) < 3 ||
 		utf8.RuneCountInString(user.PasswordHash) < 32 {
-		return &ErrBadRequest{Message: "fields missing or too short"}
+		return &apperrors.ErrBadRequest{Message: "fields missing or too short"}
 	}
 	//user verif pain here
 	if strings.Contains(user.Username, "@") {
-		return &ErrBadRequest{Message: "invalid username"}
+		return &apperrors.ErrBadRequest{Message: "invalid username"}
 	}
 
 	//email verif pain here!
 	emailPrefix, emailPostfix, ok := strings.Cut(user.Email, "@")
 	if !ok || emailPrefix == "" || emailPostfix == "" || !strings.Contains(emailPostfix, ".") ||
 		strings.Contains(emailPostfix, "@") {
-		return &ErrBadRequest{Message: "invalid email address"}
+		return &apperrors.ErrBadRequest{Message: "invalid email address"}
 	}
 	return nil
 }
@@ -103,22 +104,22 @@ func (s *service) Authenticate(
 		user, err = s.findByUsername(ctx, identifier)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("authenticating user: %w", err)
+		return nil, fmt.Errorf("authenticating user: %w", apperrors.ErrNotFound)
 	}
 
 	passwordsMatch, err := s.passwordHasher.verifyPassword(password, user.PasswordHash)
 	if err != nil {
-		return nil, fmt.Errorf("authenticating user: %w", err)
+		return nil, fmt.Errorf("authenticating user: %w", apperrors.ErrUnauthenticated)
 	}
 	if passwordsMatch {
 		return user, nil
 	}
-	return nil, ErrUnauthenticated
+	return nil, apperrors.ErrUnauthenticated
 }
 
 func (s *service) findByEmail(ctx context.Context, email string) (*User, error) {
 	if email == "" {
-		return nil, &ErrBadRequest{Message: "email not provided"}
+		return nil, &apperrors.ErrBadRequest{Message: "email not provided"}
 	}
 
 	user, err := s.repo.FindByEmail(ctx, email)
@@ -131,7 +132,7 @@ func (s *service) findByEmail(ctx context.Context, email string) (*User, error) 
 
 func (s *service) findByUsername(ctx context.Context, username string) (*User, error) {
 	if username == "" {
-		return nil, &ErrBadRequest{Message: "username not provided"}
+		return nil, &apperrors.ErrBadRequest{Message: "username not provided"}
 	}
 
 	user, err := s.repo.FindByUsername(ctx, username)

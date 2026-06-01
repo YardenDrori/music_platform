@@ -9,6 +9,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+
+	"github.com/YardenDrori/music-platform/internal/apperrors"
 )
 
 type tokenPair struct {
@@ -89,7 +91,7 @@ func (t *JWTTokenizerHS256) ValidateAccessToken(
 	token string,
 ) (*Claims, error) {
 	if token == "" {
-		return nil, &ErrBadRequest{Message: "token not provided"}
+		return nil, &apperrors.ErrBadRequest{Message: "token not provided"}
 	}
 
 	claims := &Claims{}
@@ -106,7 +108,7 @@ func (t *JWTTokenizerHS256) ValidateAccessToken(
 	case err == nil:
 		return claims, nil
 	case errors.Is(err, jwt.ErrTokenExpired):
-		return nil, ErrBadToken
+		return nil, apperrors.ErrBadToken
 	default:
 		return nil, fmt.Errorf("validating token: %w", err)
 	}

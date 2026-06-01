@@ -9,6 +9,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/YardenDrori/music-platform/internal/apperrors"
 )
 
 type postgresRepository struct {
@@ -34,7 +36,7 @@ func (r *postgresRepository) Create(ctx context.Context, u *User) error {
 	}
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		if pgErr.Code == "23505" {
-			return ErrConflict
+			return apperrors.ErrConflict
 		}
 	}
 
@@ -56,7 +58,7 @@ func (r *postgresRepository) Update(ctx context.Context, u *User) error {
 	}
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		if pgErr.Code == "23505" {
-			return ErrConflict
+			return apperrors.ErrConflict
 		}
 	}
 
@@ -82,7 +84,7 @@ func (r *postgresRepository) FindByEmail(ctx context.Context, email string) (*Us
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, apperrors.ErrNotFound
 		}
 		return nil, fmt.Errorf("finding user by email: %w", err)
 	}
@@ -104,7 +106,7 @@ func (r *postgresRepository) FindByID(ctx context.Context, id uuid.UUID) (*User,
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, apperrors.ErrNotFound
 		}
 		return nil, fmt.Errorf("finding user by uuid: %w", err)
 	}
@@ -123,7 +125,7 @@ func (r *postgresRepository) FindByUsername(ctx context.Context, username string
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, apperrors.ErrNotFound
 		}
 		return nil, fmt.Errorf("finding user by username: %w", err)
 	}
