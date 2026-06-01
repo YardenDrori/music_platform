@@ -86,7 +86,7 @@
 }
 
 .login__form-textbox {
-  color: var(--subtext0);
+  color: var(--text);
   background-color: var(--surface1);
 
   padding: 16px;
@@ -103,7 +103,7 @@
 }
 
 .register__form-textbox {
-  color: var(--subtext0);
+  color: var(--text);
   background-color: var(--surface1);
 
   padding: 16px;
@@ -132,7 +132,7 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  left: 6px;
+  left: 18px;
 
   pointer-events: none;
 
