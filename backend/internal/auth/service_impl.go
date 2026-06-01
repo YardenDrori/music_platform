@@ -80,6 +80,7 @@ func (s *service) Register(
 	var repoErr error
 	var newUser *user.User
 	for range 3 {
+		newUserReq.ID = uuid.New()
 		newUser, repoErr = s.userService.NewAccount(ctx, &newUserReq)
 		if !errors.Is(repoErr, apperrors.ErrConflict) {
 			break
