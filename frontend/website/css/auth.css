@@ -251,7 +251,7 @@
 
   font-size: 1rem;
 
-  transition: 0.1s ease;
+  transition: 0.1s ease-out;
 
   position: relative;
 }
