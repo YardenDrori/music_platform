@@ -120,8 +120,6 @@ export function renderLogin(): void {
         showErrorOnForm((e as Error).message);
         return;
       }
-
-      setAccessToken(resp.accessToken);
     });
 
   document.querySelector("#register-button")!.addEventListener("click", (e) => {
