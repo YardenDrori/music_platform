@@ -113,11 +113,12 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
-	refreshToken := r.Header.Get("refresh-token")
-	if refreshToken == "" {
+	cookie, err := r.Cookie("refresh-token")
+	if err != nil {
 		writeError(w, http.StatusBadRequest, "refresh-token header not included")
 		return
 	}
+	refreshToken := cookie.Value
 
 	tokens, err := h.service.RequestAccessToken(r.Context(), refreshToken)
 	if err != nil {
