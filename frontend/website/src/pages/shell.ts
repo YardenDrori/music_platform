@@ -24,15 +24,9 @@ export function renderWithShell(next: (renderIn: string) => void) {
     <div class="shell__bottom-bar">
       <div class="shell__current-playing-song">
         <div class="shell__now-playing-album-pic"></div>
-        <div class="shell__now-playing-title-and-runtime">
+        <div class="shell__now-playing-title-and-artist">
           <p class="shell__now-playing-song-name">Never Gonna Give You Up</p>
           <p class="shell__now-playing-artist-name">Rick Astly ft Your Mom</p>
-          <div class="shell__now-playing-runtime-section">
-            <p class="shell__current-playing-runtime-current">69:69</p>
-            <div class="shell__current-playing-runtime-progress-bar-current"></div>
-            <div class="shell__current-playing-runtime-progress-bar-total"></div>
-            <p class="shell__current-playing-runtime-total">420:420</p>
-          </div>
         </div>
       </div>
 
@@ -57,6 +51,13 @@ export function renderWithShell(next: (renderIn: string) => void) {
           <button type="button" class="shell__subtitiles-button"></button>
           <button type="button" class="shell__queue-button"></button>
         </div>
+      </div>
+
+      <div class="shell__now-playing-runtime-section">
+        <p class="shell__current-playing-runtime-current">69:69</p>
+        <div class="shell__current-playing-runtime-progress-bar-current"></div>
+        <div class="shell__current-playing-runtime-progress-bar-total"></div>
+        <p class="shell__current-playing-runtime-total">420:420</p>
       </div>
 
     </div>
