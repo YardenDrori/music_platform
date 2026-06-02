@@ -1,20 +1,19 @@
 import { getMe } from "../api/user";
 
-export function renderDashboard(): void {
-  document.getElementById("app")!.innerHTML = `
-  <p>Fetching account information, this shouldn't take long...</p>
-  `;
+export function renderDashboard(renderIn: string): void {
+  const root = document.getElementById(renderIn)!;
+
+  root.innerHTML = `<p>Fetching account information, this shouldn't take long...</p>`;
 
   getMe()
     .then((user) => {
       console.log("own details fetched");
-      const app = document.getElementById("app")!;
-      app.innerHTML = "";
+      root.innerHTML = "";
 
       const welcomeMsg = document.createElement("p");
       welcomeMsg.textContent = "Welcome back " + user.firstName + "!";
 
-      app.appendChild(welcomeMsg);
+      root.appendChild(welcomeMsg);
     })
     .catch((err) => {
       const app = document.getElementById("app")!;

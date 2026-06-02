@@ -1,6 +1,7 @@
 import { renderDashboard } from "./pages/dashboard";
 import { renderLogin } from "./pages/login";
 import { renderRegister } from "./pages/register";
+import { renderWithShell } from "./pages/shell";
 import { getAccessToken } from "./state";
 
 function needLogin(render: () => void) {
@@ -20,6 +21,6 @@ export function route() {
     renderRegister();
   } else {
     //default route
-    needLogin(renderDashboard);
+    needLogin(() => renderWithShell(renderDashboard));
   }
 }
