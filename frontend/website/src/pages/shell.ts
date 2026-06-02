@@ -1,3 +1,6 @@
+import { playIcon, repeatOffIcon, shuffleIcon } from "../icons";
+import { nextTrackStyle, prevTrackStyle } from "../state";
+
 export const idForContent: string = "content";
 export const shellName: string = "shell-root";
 
@@ -22,34 +25,36 @@ export function renderWithShell(next: (renderIn: string) => void) {
     <div id="${idForContent}" class="shell__content"></div>
 
     <div class="shell__bottom-bar">
-      <div class="shell__current-playing-song">
-        <div class="shell__now-playing-album-pic"></div>
-        <div class="shell__now-playing-title-and-artist">
-          <button type="button" class="shell__now-playing-song-name">Never Gonna Give You Up</button>
-          <button type="button" class="shell__now-playing-artist-name">Rick Astly ft Your Mom</button>
+      <div class="shell__bottom-bar-controls">
+        <div class="shell__current-playing-song">
+          <div class="shell__now-playing-album-pic"></div>
+          <div class="shell__now-playing-title-and-artist">
+            <button type="button" class="shell__now-playing-song-name">Never Gonna Give You Up</button>
+            <button type="button" class="shell__now-playing-artist-name">Rick Astly ft Your Mom</button>
+          </div>
         </div>
-      </div>
 
-      <div class="shell__media-controls">
-        <button type="button" class="shell__shuffle-button"></button>
-        <button type="button" class="shell__prev-song-button"></button>
-        <button type="button" class="shell__pause-play-button"></button>
-        <button type="button" class="shell__next-song-button"></button>
-        <button type="button" class="shell__loop-button"></button>
-      </div>
+        <div class="shell__media-controls">
+          <button type="button" class="shell__shuffle-button">${shuffleIcon}</button>
+          <button type="button" class="shell__prev-song-button">${prevTrackStyle}</button>
+          <button type="button" class="shell__pause-play-button">${playIcon}</button>
+          <button type="button" class="shell__next-song-button">${nextTrackStyle}</button>
+          <button type="button" class="shell__loop-button">${repeatOffIcon}</button>
+        </div>
 
-      <div class="shell__misc-buttons-group">
-        <div class="shell__misc-buttons-subgroup">
-          <button type="button" class="shell__like-button"></button>
-          <button type="button" class="shell__dislike-button"></button>
-        </div>
-        <div class="shell__misc-buttons-subgroup">
-          <button type="button" class="shell__placeholder-button"></button>
-          <button type="button" class="shell__volume-button"></button>
-        </div>
-        <div class="shell__misc-buttons-subgroup">
-          <button type="button" class="shell__subtitiles-button"></button>
-          <button type="button" class="shell__queue-button"></button>
+        <div class="shell__misc-buttons-group">
+          <div class="shell__misc-buttons-subgroup">
+            <button type="button" class="shell__like-button"></button>
+            <button type="button" class="shell__dislike-button"></button>
+          </div>
+          <div class="shell__misc-buttons-subgroup">
+            <button type="button" class="shell__placeholder-button"></button>
+            <button type="button" class="shell__volume-button"></button>
+          </div>
+          <div class="shell__misc-buttons-subgroup">
+            <button type="button" class="shell__subtitiles-button"></button>
+            <button type="button" class="shell__queue-button"></button>
+          </div>
         </div>
       </div>
 
