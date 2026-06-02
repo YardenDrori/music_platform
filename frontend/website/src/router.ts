@@ -1,3 +1,4 @@
+import { renewAccessToken } from "./api/auth";
 import { renderDashboard } from "./pages/dashboard";
 import { renderLogin } from "./pages/login";
 import { renderRegister } from "./pages/register";
@@ -6,8 +7,18 @@ import { getAccessToken } from "./state";
 
 function needLogin(render: () => void) {
   if (!getAccessToken()) {
-    history.pushState({}, "", "/login");
-    route();
+    console.log(
+      "entering an auth endpoint with now access token, attempting to renew",
+    );
+    renewAccessToken().then(() => {
+      if (!getAccessToken()) {
+        console.log("failed to renew access token, directing to login");
+        history.pushState({}, "", "/login");
+        route();
+        return;
+      }
+      render();
+    });
   } else {
     render();
   }
