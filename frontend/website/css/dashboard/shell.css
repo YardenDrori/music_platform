@@ -4,8 +4,8 @@
   background-color: rebeccapurple;
 }
 .shell__now-playing-album-pic-placeholder {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   background-color: rebeccapurple;
 }
 
@@ -23,7 +23,7 @@
 }
 
 .shell__top-shell-wrapper {
-  background-color: red;
+  background-color: color-mix(in srgb, var(--surface2) 30%, transparent);
 
   position: fixed;
 
@@ -33,10 +33,13 @@
   top: 0.5rem;
   width: 19.25rem;
   height: 2.875rem;
+
+  border: 1px solid var(--surface2);
+  border-radius: 30px;
 }
 
 .shell__bottom-bar {
-  background-color: red;
+  background-color: color-mix(in srgb, var(--surface2) 30%, transparent);
   position: fixed;
 
   display: flex;
@@ -45,4 +48,7 @@
   bottom: 0.5rem;
   width: 46.5rem;
   height: 3.125rem;
+
+  border: 1px solid var(--surface2);
+  border-radius: 15px;
 }
