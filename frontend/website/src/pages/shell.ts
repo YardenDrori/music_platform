@@ -8,21 +8,20 @@ export function renderWithShell(next: (renderIn: string) => void) {
   }
 
   document.getElementById("app")!.innerHTML = `
-  <div id="${shellName}">
-    <div class="shell__top-shell-wrapper"
+  <div id="${shellName}" class="shell-root">
+    <div class="shell__top-shell-wrapper">
       <div class="shell__top-nav-bar">
-        <button type="button" class="shell__home-button">
-        <button type="button" class="shell__hot-button">
-        <button type="button" class="shell__generate-button">
-        <button type="button" class="shell__search-button">
+        <button type="button" class="shell__home-button"></button>
+        <button type="button" class="shell__hot-button"></button>
+        <button type="button" class="shell__generate-button"></button>
+        <button type="button" class="shell__search-button"></button>
       </div>
       <div class="shell__account-pic-placeholder"></div>
     </div>
 
-    <div id="${idForContent}"></div>
+    <div id="${idForContent}" class="shell__content"></div>
 
     <div class="shell__bottom-bar">
-
       <div class="shell__current-playing-song">
         <div class="shell__now-playing-album-pic-placeholder"></div>
         <div class="shell__now-playing-title-and-runtime">
@@ -37,25 +36,25 @@ export function renderWithShell(next: (renderIn: string) => void) {
       </div>
 
       <div class="shell__media-controls">
-        <button type="button" class="shell__shuffle-button">
-        <button type="button" class="shell__prev-song-button">
-        <button type="button" class="shell__pause-play-button">
-        <button type="button" class="shell__next-song-button">
-        <button type="button" class="shell__loop-button">
+        <button type="button" class="shell__shuffle-button"></button>
+        <button type="button" class="shell__prev-song-button"></button>
+        <button type="button" class="shell__pause-play-button"></button>
+        <button type="button" class="shell__next-song-button"></button>
+        <button type="button" class="shell__loop-button"></button>
       </div>
 
       <div class="shell__misc-buttons-group">
         <div class="shell__misc-buttons-subgroup">
-          <button type="button" class="shell__like-button">
-          <button type="button" class="shell__dislike-button">
+          <button type="button" class="shell__like-button"></button>
+          <button type="button" class="shell__dislike-button"></button>
         </div>
         <div class="shell__misc-buttons-subgroup">
-          <button type="button" class="shell__placeholder-button">
-          <button type="button" class="shell__volume-button">
+          <button type="button" class="shell__placeholder-button"></button>
+          <button type="button" class="shell__volume-button"></button>
         </div>
         <div class="shell__misc-buttons-subgroup">
-          <button type="button" class="shell__subtitiles-button">
-          <button type="button" class="shell__queue-button">
+          <button type="button" class="shell__subtitiles-button"></button>
+          <button type="button" class="shell__queue-button"></button>
         </div>
       </div>
 
