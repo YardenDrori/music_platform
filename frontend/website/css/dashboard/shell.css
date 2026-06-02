@@ -1,9 +1,9 @@
-.shell__account-pic-placeholder {
+.shell__account-pic {
   width: 32px;
   height: 32px;
   background-color: rebeccapurple;
 }
-.shell__now-playing-album-pic-placeholder {
+.shell__now-playing-album-pic {
   width: 32px;
   height: 32px;
   background-color: rebeccapurple;

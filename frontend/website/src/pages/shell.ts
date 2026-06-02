@@ -16,14 +16,14 @@ export function renderWithShell(next: (renderIn: string) => void) {
         <button type="button" class="shell__generate-button"></button>
         <button type="button" class="shell__search-button"></button>
       </div>
-      <div class="shell__account-pic-placeholder"></div>
+      <div class="shell__account-pic"></div>
     </div>
 
     <div id="${idForContent}" class="shell__content"></div>
 
     <div class="shell__bottom-bar">
       <div class="shell__current-playing-song">
-        <div class="shell__now-playing-album-pic-placeholder"></div>
+        <div class="shell__now-playing-album-pic"></div>
         <div class="shell__now-playing-title-and-runtime">
           <p class="shell__now-playing-song-name">Never Gonna Give You Up</p>
           <p class="shell__now-playing-artist-name">Rick Astly ft Your Mom</p>
