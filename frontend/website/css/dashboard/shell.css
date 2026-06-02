@@ -4,9 +4,11 @@
   background-color: rebeccapurple;
 }
 .shell__now-playing-album-pic {
-  width: 32px;
-  height: 32px;
+  width: 48px;
+  height: 48px;
   background-color: rebeccapurple;
+  border: 1px solid var(--surface1);
+  border-radius: 4px;
 }
 
 .shell-root {
@@ -32,9 +34,8 @@
 
   top: 0.5rem;
   width: 19.25rem;
-  height: 2.875rem;
 
-  border: 1px solid var(--surface2);
+  border: 1px solid var(--surface1);
   border-radius: 30px;
 }
 
@@ -46,9 +47,51 @@
   flex-direction: row;
 
   bottom: 0.5rem;
-  width: 46.5rem;
-  height: 3.125rem;
+  min-width: 47.5rem;
+  max-width: 55rem;
 
-  border: 1px solid var(--surface2);
+  border: 1px solid var(--surface1);
   border-radius: 15px;
+
+  padding: 0.625rem;
+}
+
+.shell__current-playing-song {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+
+  max-height: 3rem;
+}
+
+.shell__now-playing-title-and-artist {
+  display: flex;
+  flex-direction: column;
+  min-width: 14rem;
+}
+
+.shell__now-playing-song-name {
+  background-color: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 1rem;
+  width: auto;
+  text-align: left;
+}
+
+.shell__now-playing-song-name:hover {
+  text-decoration: underline;
+}
+
+.shell__now-playing-artist-name {
+  background-color: transparent;
+  border: none;
+  color: var(--subtext0);
+  font-size: 1rem;
+  text-align: left;
+}
+
+.shell__now-playing-artist-name:hover {
+  text-decoration: underline;
 }

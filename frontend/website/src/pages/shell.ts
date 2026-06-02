@@ -25,8 +25,8 @@ export function renderWithShell(next: (renderIn: string) => void) {
       <div class="shell__current-playing-song">
         <div class="shell__now-playing-album-pic"></div>
         <div class="shell__now-playing-title-and-artist">
-          <p class="shell__now-playing-song-name">Never Gonna Give You Up</p>
-          <p class="shell__now-playing-artist-name">Rick Astly ft Your Mom</p>
+          <button type="button" class="shell__now-playing-song-name">Never Gonna Give You Up</button>
+          <button type="button" class="shell__now-playing-artist-name">Rick Astly ft Your Mom</button>
         </div>
       </div>
 
