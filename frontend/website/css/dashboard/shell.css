@@ -44,7 +44,7 @@
   position: fixed;
 
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
 
   bottom: 0.5rem;
   min-width: 47.5rem;
@@ -56,11 +56,20 @@
   padding: 0.625rem;
 }
 
+.shell__bottom-bar-controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
 .shell__current-playing-song {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 0.45rem;
+  width: 24rem;
 
   max-height: 3rem;
 }
@@ -68,7 +77,6 @@
 .shell__now-playing-title-and-artist {
   display: flex;
   flex-direction: column;
-  min-width: 14rem;
 }
 
 .shell__now-playing-song-name {
@@ -94,4 +102,76 @@
 
 .shell__now-playing-artist-name:hover {
   text-decoration: underline;
+}
+
+.shell__media-controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.shell__shuffle-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtext2);
+  background-color: transparent;
+  border: none;
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.shell__prev-song-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtext2);
+  background-color: transparent;
+  border: none;
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
+.shell__pause-play-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtext2);
+  background-color: transparent;
+  border: none;
+  width: 2.2rem;
+  height: 2.2rem;
+}
+
+.shell__next-song-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtext2);
+  background-color: transparent;
+  border: none;
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
+.shell__loop-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtext2);
+  background-color: transparent;
+  border: none;
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.shell__misc-buttons-group {
+  width: 24rem;
+  display: flex;
+  justify-content: flex-end;
 }
