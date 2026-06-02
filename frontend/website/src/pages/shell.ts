@@ -43,18 +43,14 @@ export function renderWithShell(next: (renderIn: string) => void) {
         </div>
 
         <div class="shell__misc-buttons-group">
-          <div class="shell__misc-buttons-subgroup">
-            <button type="button" class="shell__like-button"></button>
-            <button type="button" class="shell__dislike-button"></button>
-          </div>
+          <button type="button" class="shell__like-button"></button>
+          <button type="button" class="shell__dislike-button"></button>
           <div class="shell__misc-buttons-subgroup">
             <button type="button" class="shell__placeholder-button"></button>
             <button type="button" class="shell__volume-button"></button>
           </div>
-          <div class="shell__misc-buttons-subgroup">
-            <button type="button" class="shell__subtitiles-button"></button>
-            <button type="button" class="shell__queue-button"></button>
-          </div>
+          <button type="button" class="shell__subtitiles-button"></button>
+          <button type="button" class="shell__queue-button"></button>
         </div>
       </div>
 

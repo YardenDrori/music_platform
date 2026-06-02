@@ -175,3 +175,19 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.shell__misc-buttons-subgroup {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+.shell__like-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtext2);
+  background-color: transparent;
+  border: none;
+  width: 1.4rem;
+  height: 1.4rem;
+}
