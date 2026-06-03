@@ -1,14 +1,16 @@
 .shell__account-pic {
   width: 32px;
   height: 32px;
-  background-color: rebeccapurple;
+  background-color: var(--surface1);
   margin-left: 8px;
   margin-right: 8px;
+  border: 2px solid var(--surface1);
+  border-radius: 50%;
 }
 .shell__now-playing-album-pic {
   width: 48px;
   height: 48px;
-  background-color: rebeccapurple;
+  background-color: var(--surface1);
   border: 1px solid var(--surface1);
   border-radius: 4px;
 }
@@ -64,10 +66,13 @@
   left: 50%;
   transform: translateX(-50%);
 
-  min-width: 30rem;
-  max-width: 19.25rem;
+  max-width: 30rem;
+  min-width: 19.25rem;
   width: 30%;
   height: 100%;
+
+  margin-left: 1rem;
+  margin-right: 1rem;
 }
 
 .shell__top-nav-bar::after {
@@ -109,11 +114,6 @@
 
 .shell__volume-controls-button {
   margin-right: 1rem;
-}
-
-.shell__account-pic {
-  border: 2px solid var(--mantle);
-  border-radius: 50%;
 }
 
 /* ==========BOTTOM BAR========== */
