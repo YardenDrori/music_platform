@@ -49,6 +49,7 @@
   bottom: 0.5rem;
   min-width: 47.5rem;
   max-width: 55rem;
+  width: 65%;
 
   border: 1px solid var(--surface1);
   border-radius: 15px;
@@ -69,7 +70,7 @@
   flex-direction: row;
   align-items: center;
   gap: 0.45rem;
-  width: 24rem;
+  width: 35%;
 
   max-height: 3rem;
 }
@@ -122,8 +123,8 @@
   color: var(--subtext2);
   background-color: transparent;
   border: none;
-  width: 1.4rem;
-  height: 1.4rem;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .shell__prev-song-button {
@@ -166,28 +167,94 @@
   color: var(--subtext2);
   background-color: transparent;
   border: none;
-  width: 1.4rem;
-  height: 1.4rem;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .shell__misc-buttons-group {
-  width: 24rem;
+  width: 35%;
   display: flex;
   justify-content: flex-end;
+  gap: 1.8rem;
+  align-items: center;
 }
 
 .shell__misc-buttons-subgroup {
+  display: flex;
+  flex-direction: row;
+  gap: 0.8rem;
+}
+
+.shell__misc-buttons-subgroup-middle {
+  display: flex;
+  flex-direction: row;
+  gap: 0.8rem;
   margin-left: 1rem;
   margin-right: 1rem;
 }
 
-.shell__like-button {
+.shell__favorites-button {
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--subtext2);
   background-color: transparent;
   border: none;
-  width: 1.4rem;
-  height: 1.4rem;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.shell__rate-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtext2);
+  background-color: transparent;
+  border: none;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.shell__add-tag-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtext2);
+  background-color: transparent;
+  border: none;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.shell__add-to-library-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtext2);
+  background-color: transparent;
+  border: none;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.shell__subtitiles-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtext2);
+  background-color: transparent;
+  border: none;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.shell__queue-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtext2);
+  background-color: transparent;
+  border: none;
+  width: 1.5rem;
+  height: 1.5rem;
 }

@@ -1,8 +1,9 @@
-import { nextTrackIconA, prevTrackIconA } from "./icons";
+import { favsTagIconA, nextTrackIconA, prevTrackIconA } from "./icons";
 
 let accessToken: string | null = null;
 export let prevTrackStyle: string = prevTrackIconA;
 export let nextTrackStyle: string = nextTrackIconA;
+export let favsTagButtonStyle: string = favsTagIconA;
 
 export function setAccessToken(token: string) {
   accessToken = token;

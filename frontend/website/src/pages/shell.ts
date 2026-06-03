@@ -1,5 +1,14 @@
-import { playIcon, repeatOffIcon, shuffleIcon } from "../icons";
-import { nextTrackStyle, prevTrackStyle } from "../state";
+import {
+  libraryIcon,
+  likeIcon,
+  lyricsIcon,
+  playIcon,
+  queueIcon,
+  repeatOffIcon,
+  shuffleIcon,
+  tagIcon,
+} from "../icons";
+import { favsTagButtonStyle, nextTrackStyle, prevTrackStyle } from "../state";
 
 export const idForContent: string = "content";
 export const shellName: string = "shell-root";
@@ -43,14 +52,20 @@ export function renderWithShell(next: (renderIn: string) => void) {
         </div>
 
         <div class="shell__misc-buttons-group">
-          <button type="button" class="shell__like-button"></button>
-          <button type="button" class="shell__dislike-button"></button>
           <div class="shell__misc-buttons-subgroup">
-            <button type="button" class="shell__placeholder-button"></button>
-            <button type="button" class="shell__volume-button"></button>
+            <button type="button" class="shell__favorites-button">${favsTagButtonStyle}</button>
+            <button type="button" class="shell__rate-button">
+              ${likeIcon}
+            </button>
           </div>
-          <button type="button" class="shell__subtitiles-button"></button>
-          <button type="button" class="shell__queue-button"></button>
+          <div class="shell__misc-buttons-subgroup-middle">
+            <button type="button" class="shell__add-tag-button">${tagIcon}</button>
+            <button type="button" class="shell__add-to-library-button">${libraryIcon}</button>
+          </div>
+          <div class="shell__misc-buttons-subgroup">
+            <button type="button" class="shell__subtitiles-button">${lyricsIcon}</button>
+            <button type="button" class="shell__queue-button">${queueIcon}</button>
+          </div>
         </div>
       </div>
 
