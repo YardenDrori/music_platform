@@ -26,6 +26,7 @@
 
 .shell__top-shell-wrapper {
   background-color: color-mix(in srgb, var(--surface2) 30%, transparent);
+  backdrop-filter: blur(1.5px);
 
   position: fixed;
 
@@ -41,6 +42,7 @@
 
 .shell__bottom-bar {
   background-color: color-mix(in srgb, var(--surface2) 30%, transparent);
+  backdrop-filter: blur(1.5px);
   position: fixed;
 
   display: flex;
