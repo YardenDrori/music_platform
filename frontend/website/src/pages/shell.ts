@@ -70,10 +70,15 @@ export function renderWithShell(next: (renderIn: string) => void) {
       </div>
 
       <div class="shell__now-playing-runtime-section">
-        <p class="shell__current-playing-runtime-current">69:69</p>
-        <div class="shell__current-playing-runtime-progress-bar-current"></div>
-        <div class="shell__current-playing-runtime-progress-bar-total"></div>
-        <p class="shell__current-playing-runtime-total">420:420</p>
+        <div class="shell__runtime-number-wrapper-start">
+          <p class="shell__current-playing-runtime-current">69:69</p>
+        </div>
+        <div class="shell__current-playing-runtime-progress-bar-total">
+          <div class="shell__current-playing-runtime-progress-bar-current"></div>
+        </div>
+        <div class="shell__runtime-number-wrapper-end">
+          <p class="shell__current-playing-runtime-total">420:420</p>
+        </div>
       </div>
 
     </div>
