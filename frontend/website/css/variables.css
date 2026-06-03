@@ -26,6 +26,7 @@
   --base: #eff1f5;
   --mantle: #e6e9ef;
   --crust: #dce0e8;
+  --accent: #8839ef;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -56,6 +57,7 @@
     --base: #1e1e2e;
     --mantle: #181825;
     --crust: #11111b;
+    --accent: #cba6f7;
   }
 }
 
@@ -86,6 +88,7 @@
   --base: #303446;
   --mantle: #292c3c;
   --crust: #232634;
+  --accent: #ca9ee6;
 }
 
 [data-theme="macchiato"] {
@@ -115,6 +118,7 @@
   --base: #24273a;
   --mantle: #1e2030;
   --crust: #181926;
+  --accent: #c6a0f6;
 }
 
 [data-theme="mocha"] {
@@ -144,4 +148,5 @@
   --base: #1e1e2e;
   --mantle: #181825;
   --crust: #11111b;
+  --accent: #cba6f7;
 }
