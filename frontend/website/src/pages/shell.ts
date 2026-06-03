@@ -1,14 +1,25 @@
 import {
-  libraryIcon,
+  addToLibraryIcon,
+  homePageIcon,
   likeIcon,
   lyricsIcon,
+  placeholderIcon,
   playIcon,
   queueIcon,
   repeatOffIcon,
+  searchIcon,
   shuffleIcon,
+  sidebarIcon,
+  sparkleIcon,
   tagIcon,
+  volumeHighIcon,
 } from "../icons";
-import { favsTagButtonStyle, nextTrackStyle, prevTrackStyle } from "../state";
+import {
+  favsTagButtonStyle,
+  galleryIconStyle,
+  nextTrackStyle,
+  prevTrackStyle,
+} from "../state";
 
 export const idForContent: string = "content";
 export const shellName: string = "shell-root";
@@ -22,13 +33,18 @@ export function renderWithShell(next: (renderIn: string) => void) {
   document.getElementById("app")!.innerHTML = `
   <div id="${shellName}" class="shell-root">
     <div class="shell__top-shell-wrapper">
+      <button type="button" class="shell__sidebar-toggle-button shell__svg-button-top">${sidebarIcon}</button>
       <div class="shell__top-nav-bar">
-        <button type="button" class="shell__home-button"></button>
-        <button type="button" class="shell__hot-button"></button>
-        <button type="button" class="shell__generate-button"></button>
-        <button type="button" class="shell__search-button"></button>
+        <button type="button" class="shell__home-button shell__svg-button-top">${homePageIcon}</button>
+        <button type="button" class="shell__temp-button shell__svg-button-top">${placeholderIcon}</button>
+        <button type="button" class="shell__generate-button shell__svg-button-top">${sparkleIcon}</button>
+        <button type="button" class="shell__library-button shell__svg-button-top">${galleryIconStyle}</button>
+        <button type="button" class="shell__search-button shell__svg-button-top">${searchIcon}</button>
       </div>
-      <div class="shell__account-pic"></div>
+      <div class="shell__profile-pic-and-volume-wrapper">
+        <button type="button" class="shell__svg-button-top shell__volume-controls-button">${volumeHighIcon}</button>
+        <button type="button" class="shell__account-pic"></button>
+      </div>
     </div>
 
     <div id="${idForContent}" class="shell__content"></div>
@@ -60,7 +76,7 @@ export function renderWithShell(next: (renderIn: string) => void) {
           </div>
           <div class="shell__misc-buttons-subgroup-middle">
             <button type="button" class="shell__add-tag-button">${tagIcon}</button>
-            <button type="button" class="shell__add-to-library-button">${libraryIcon}</button>
+            <button type="button" class="shell__add-to-library-button">${addToLibraryIcon}</button>
           </div>
           <div class="shell__misc-buttons-subgroup">
             <button type="button" class="shell__subtitiles-button">${lyricsIcon}</button>

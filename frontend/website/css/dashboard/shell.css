@@ -2,6 +2,8 @@
   width: 32px;
   height: 32px;
   background-color: rebeccapurple;
+  margin-left: 8px;
+  margin-right: 8px;
 }
 .shell__now-playing-album-pic {
   width: 48px;
@@ -24,22 +26,97 @@
   min-height: 100%;
 }
 
+/* ==========TOP BAR========== */
 .shell__top-shell-wrapper {
-  background-color: color-mix(in srgb, var(--surface2) 30%, transparent);
-  backdrop-filter: blur(1.5px);
-
   position: fixed;
+  width: 100%;
+  min-height: 3rem;
 
   display: flex;
   flex-direction: row;
+  align-items: center;
 
   top: 0.5rem;
-  width: 19.25rem;
+}
+
+.shell__sidebar-toggle-button {
+  position: absolute;
+
+  top: 50%;
+  transform: translateY(-50%);
+  left: 1rem;
+}
+
+.shell__top-nav-bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+
+  background-color: color-mix(in srgb, var(--surface2) 30%, transparent);
+  backdrop-filter: blur(1.5px);
 
   border: 1px solid var(--surface1);
   border-radius: 30px;
+
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+
+  min-width: 30rem;
+  max-width: 19.25rem;
+  width: 30%;
+  height: 100%;
 }
 
+.shell__top-nav-bar::after {
+  content: "";
+  height: 96%;
+  width: 24%;
+  position: absolute;
+  border: none;
+  border-radius: inherit;
+  background-color: color-mix(in srgb, var(--overlay0) 60%, transparent);
+  z-index: 0;
+}
+
+.shell__svg-button-top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtext2);
+  background-color: transparent;
+  border: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  z-index: 1;
+}
+
+.shell__profile-pic-and-volume-wrapper {
+  position: absolute;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+
+  top: 50%;
+  transform: translateY(-50%);
+  right: 1rem;
+}
+
+.shell__volume-controls-button {
+  margin-right: 1rem;
+}
+
+.shell__account-pic {
+  border: 2px solid var(--mantle);
+  border-radius: 50%;
+}
+
+/* ==========BOTTOM BAR========== */
 .shell__bottom-bar {
   background-color: color-mix(in srgb, var(--surface2) 30%, transparent);
   backdrop-filter: blur(1.5px);
