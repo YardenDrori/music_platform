@@ -1,9 +1,11 @@
+import { route } from "../router";
 import { setAccessToken } from "../state";
 import type {
   AuthResponse,
   LoginRequest,
   RegisterRequest,
 } from "../types/auth";
+import { InternalError } from "../types/errors";
 import { validateResponse } from "../utils";
 
 export async function register(req: RegisterRequest): Promise<AuthResponse> {
@@ -31,6 +33,12 @@ export async function renewAccessToken(): Promise<void> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
   });
+
+  if (resp.status >= 500) {
+    history.pushState({}, "", "/internal-error");
+    route();
+    throw new InternalError();
+  }
 
   try {
     const body = await validateResponse(resp);

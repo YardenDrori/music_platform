@@ -1,4 +1,5 @@
 import { getMe } from "../api/user";
+import { InternalError } from "../types/errors";
 
 export function renderDashboard(renderIn: string): void {
   const root = document.getElementById(renderIn)!;
@@ -16,6 +17,9 @@ export function renderDashboard(renderIn: string): void {
       root.appendChild(welcomeMsg);
     })
     .catch((err) => {
+      if (err instanceof InternalError) {
+        return;
+      }
       const app = document.getElementById("app")!;
       const message = err instanceof Error ? err.message : "unknown error";
       app.textContent = "An unexpected error occurred: " + message;

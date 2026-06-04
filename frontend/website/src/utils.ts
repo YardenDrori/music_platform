@@ -1,5 +1,7 @@
 import { renewAccessToken } from "./api/auth";
+import { route } from "./router";
 import { getAccessToken } from "./state";
+import { InternalError } from "./types/errors";
 
 export function verifyValidEmail(email: string): boolean {
   const identifierParts = email.split("@");
@@ -56,12 +58,27 @@ export async function authenticatedFetch(
   };
 
   let resp = await makeRequest();
+  if (resp.status >= 500) {
+    history.pushState({}, "", "internal-error");
+    route();
+    throw new InternalError();
+  }
 
   if (resp.status === 401) {
     try {
       await renewAccessToken();
-      return await validateResponse(await makeRequest());
+      resp = await makeRequest();
+      if (resp.status >= 500) {
+        history.pushState({}, "", "internal-error");
+        route();
+        throw new InternalError();
+      }
+      return await validateResponse(resp);
     } catch (e) {
+      if (e instanceof InternalError) {
+        throw e;
+      }
+
       throw new Error(
         `making an authenticatedFetch request to ${url}, ${params}`,
         { cause: e },
