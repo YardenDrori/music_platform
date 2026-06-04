@@ -72,11 +72,6 @@ func (s *service) Register(
 		Password:  req.Password,
 	}
 
-	tokens, err := s.tokenizer.GenerateTokenPair(newUserReq.ID)
-	if err != nil {
-		return nil, nil, fmt.Errorf("registering: %w", err)
-	}
-
 	var repoErr error
 	var newUser *user.User
 	for range 3 {
@@ -94,6 +89,11 @@ func (s *service) Register(
 		return nil, nil, &apperrors.ErrBadRequest{Message: "email or username unavailable"}
 	default:
 		return nil, nil, fmt.Errorf("attempting to create new user: %w", repoErr)
+	}
+
+	tokens, err := s.tokenizer.GenerateTokenPair(newUserReq.ID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("registering: %w", err)
 	}
 
 	for range 3 {

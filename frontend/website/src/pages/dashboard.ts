@@ -22,6 +22,7 @@ export function renderDashboard(renderIn: string): void {
       }
       const app = document.getElementById("app")!;
       const message = err instanceof Error ? err.message : "unknown error";
+      console.log(err);
       app.textContent = "An unexpected error occurred: " + message;
     });
 }
