@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -14,8 +15,12 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+	"golang.org/x/tools/go/analysis/passes/stringintconv"
 
 	"github.com/YardenDrori/music-platform/internal/auth"
+	"github.com/YardenDrori/music-platform/internal/storage"
 	"github.com/YardenDrori/music-platform/internal/user"
 )
 
@@ -44,6 +49,27 @@ func run() error {
 	}
 	defer db.Close()
 	slog.Info("connected to database")
+
+	storageEndpoint := os.Getenv("STORAGE_ENDPOINT")
+	storageAccessKey := os.Getenv("STORAGE_ACCESS_KEY")
+	storageSecretAccessKey := os.Getenv("STORAGE_SECRET_ACCESS_KEY")
+	storageIsSecureStr := os.Getenv("STORAGE_IS_SECURE")
+	if storageEndpoint == "" {
+		return fmt.Errorf("storage endpoint not present in env: %w", err)
+	}
+	if storageAccessKey == "" {
+		return fmt.Errorf("storage access key not present in env: %w", err)
+	}
+	if storageSecretAccessKey == "" {
+		return fmt.Errorf("storage secret access key not present in env: %w", err)
+	}
+	if storageIsSecureStr == "" {
+		return fmt.Errorf("storage is secure not present in env")
+	}
+	storageIsSecure, err := strconv.ParseBool(storageIsSecureStr)
+	if err != nil {
+		return fmt.Errorf("STORAGE_IS_SECURE value format invalid")
+	}
 
 	signingKey := os.Getenv("SIGNING_KEY")
 	accessTokenDurStr := os.Getenv("ACCESS_TOKEN_DURATION")
@@ -83,6 +109,18 @@ func run() error {
 	)
 	authHandler := auth.NewHandler(authService)
 	requireAuth := auth.NewRequireAuth(authService)
+
+	//==========STORAGE==========
+	storageCreds := credentials.NewStaticV4(storageAccessKey, storageSecretAccessKey, "")
+	storageOpts := &minio.Options{
+		Creds:  storageCreds,
+		Secure: storageIsSecure,
+	}
+	minioClient, err := minio.New(storageEndpoint, storageOpts)
+	if err != nil {
+		return fmt.Errorf("failed to instantiate minioClient: %w", err)
+	}
+	sorageService := storage.NewService(minioClient)
 
 	//==========Server==========
 	mux := http.NewServeMux()
