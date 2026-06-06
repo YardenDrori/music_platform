@@ -9,6 +9,7 @@ CREATE TABLE albums (
   updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at     TIMESTAMPTZ,
   premiered_at   TIMESTAMPTZ
+  uploader_id    UUID REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE album_artists (
