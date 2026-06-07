@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -123,29 +124,60 @@ func (r *postgresRepository) GetArtistByID(ctx context.Context, id uuid.UUID) (*
 	return artist, nil
 }
 
-func (r *postgresRepository) UpdateArtist(ctx context.Context, artist Artist) error {
-	queryDetails, err := r.db.Exec(ctx, `
-		UPDATE artists SET name = $1, description = $2, artist_image_key = $3,
-		artist_banner_key = $4, link_to_youtube = $5, link_to_spotify = $6,
-		link_to_apple_music = $7, birth_date = $8, birth_place = $9,
-		updated_at = $10, deleted_at = $11 WHERE id = $12`,
-		artist.Name,
-		artist.Description,
-		artist.ArtistImageKey,
-		artist.ArtistBannerKey,
-		artist.LinkToYouTube,
-		artist.LinkToSpotify,
-		artist.LinkToAppleMusic,
-		artist.BirthDate,
-		artist.BirthPlace,
-		artist.UpdatedAt,
-		artist.DeletedAt,
-		artist.ID,
-	)
+func (r *postgresRepository) UpdateArtist(ctx context.Context, req UpdateArtistReq) error {
+	setClauses := []string{"updated_at = NOW()"}
+	args := []any{}
+	i := 1
+
+	if req.Name != nil {
+		setClauses = append(setClauses, fmt.Sprintf("name = $%d", i))
+		args = append(args, *req.Name)
+		i++
+	}
+	if req.Description != nil {
+		setClauses = append(setClauses, fmt.Sprintf("description = $%d", i))
+		args = append(args, *req.Description)
+		i++
+	}
+	if req.LinkToYouTube != nil {
+		setClauses = append(setClauses, fmt.Sprintf("link_to_youtube = $%d", i))
+		args = append(args, *req.LinkToYouTube)
+		i++
+	}
+	if req.LinkToSpotify != nil {
+		setClauses = append(setClauses, fmt.Sprintf("link_to_spotify = $%d", i))
+		args = append(args, *req.LinkToSpotify)
+		i++
+	}
+	if req.LinkToAppleMusic != nil {
+		setClauses = append(setClauses, fmt.Sprintf("link_to_apple_music = $%d", i))
+		args = append(args, *req.LinkToAppleMusic)
+		i++
+	}
+	if req.BirthDate != nil {
+		setClauses = append(setClauses, fmt.Sprintf("birth_date = $%d", i))
+		args = append(args, *req.BirthDate)
+		i++
+	}
+	if req.BirthPlace != nil {
+		setClauses = append(setClauses, fmt.Sprintf("birth_place = $%d", i))
+		args = append(args, *req.BirthPlace)
+		i++
+	}
+	if req.DeletedAt != nil {
+		setClauses = append(setClauses, fmt.Sprintf("deleted_at = $%d", i))
+		args = append(args, *req.DeletedAt)
+		i++
+	}
+
+	args = append(args, req.ID)
+	query := fmt.Sprintf("UPDATE artists SET %s WHERE id = $%d", strings.Join(setClauses, ", "), i)
+
+	tag, err := r.db.Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("updating artist: %w", err)
 	}
-	if queryDetails.RowsAffected() == 0 {
+	if tag.RowsAffected() == 0 {
 		return apperrors.ErrNotFound
 	}
 	return nil
