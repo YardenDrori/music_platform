@@ -2,11 +2,8 @@ package auth
 
 import (
 	"encoding/json"
-	"errors"
-	"log/slog"
+	"fmt"
 	"net/http"
-
-	"github.com/YardenDrori/music-platform/internal/apperrors"
 )
 
 type handler struct {
@@ -17,36 +14,16 @@ func NewHandler(service Service) *handler {
 	return &handler{service: service}
 }
 
-func writeInternalError(w http.ResponseWriter) {
-	writeError(w, http.StatusInternalServerError, "internal server error")
-}
-
-func writeError(w http.ResponseWriter, status int, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(map[string]string{"error": message}); err != nil {
-		slog.Error("encoding response", "error", err)
-	}
-}
-
-func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Register(w http.ResponseWriter, r *http.Request) error {
 	var req registerRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
-		return
+		return err
 	}
 
 	resp, newUser, err := h.service.Register(r.Context(), &req)
 	if err != nil {
-		if err, ok := errors.AsType[*apperrors.ErrBadRequest](err); ok {
-			writeError(w, http.StatusBadRequest, err.Message)
-			return
-		}
-
-		slog.Error("registering new account: ", "error", err)
-		writeInternalError(w)
-		return
+		return err
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -64,33 +41,22 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 		User:        newUser,
 		AccessToken: resp.accessToken,
 	}); err != nil {
-		slog.Error("encoding response", "error", err)
+		return fmt.Errorf("encoding response", "error", err)
 	}
+	return nil
 }
 
-func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Login(w http.ResponseWriter, r *http.Request) error {
 	var req loginRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
 
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
-		return
+		return err
 	}
 
 	resp, user, err := h.service.Login(r.Context(), &req)
-
-	if errors.Is(err, apperrors.ErrUnauthenticated) {
-		writeError(w, http.StatusUnauthorized, "invalid credentials")
-		return
-	}
-	if err, ok := errors.AsType[*apperrors.ErrBadRequest](err); ok {
-		writeError(w, http.StatusBadRequest, err.Message)
-		return
-	}
 	if err != nil {
-		slog.Error("logging in:", "error", err)
-		writeInternalError(w)
-		return
+		return err
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -108,27 +74,21 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		User:        user,
 		AccessToken: resp.accessToken,
 	}); err != nil {
-		slog.Error("encoding response", "error", err)
+		return fmt.Errorf("encoding response", "error", err)
 	}
+	return nil
 }
 
-func (h *handler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetAccessToken(w http.ResponseWriter, r *http.Request) error {
 	cookie, err := r.Cookie("refresh-token")
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "refresh-token header not included")
-		return
+		return err
 	}
-	refreshToken := cookie.Value
 
+	refreshToken := cookie.Value
 	tokens, err := h.service.RequestAccessToken(r.Context(), refreshToken)
 	if err != nil {
-		if errors.Is(err, apperrors.ErrBadToken) {
-			writeError(w, http.StatusUnauthorized, "Bad token")
-		} else {
-			slog.Error("getting access token: ", "error", err)
-			writeInternalError(w)
-		}
-		return
+		return err
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -146,6 +106,7 @@ func (h *handler) GetAccessToken(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(&accessTokenResp{
 		AccessToken: tokens.accessToken,
 	}); err != nil {
-		slog.Error("encoding response", "error", err)
+		return fmt.Errorf("encoding response", "error", err)
 	}
+	return nil
 }
