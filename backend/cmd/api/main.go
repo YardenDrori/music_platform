@@ -19,6 +19,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"golang.org/x/tools/go/analysis/passes/stringintconv"
 
+	"github.com/YardenDrori/music-platform/internal/apperrors"
 	"github.com/YardenDrori/music-platform/internal/auth"
 	"github.com/YardenDrori/music-platform/internal/storage"
 	"github.com/YardenDrori/music-platform/internal/user"
@@ -28,6 +29,44 @@ func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+type router struct {
+	mux        *http.ServeMux
+	middleware []func(http.ResponseWriter, *http.Request) (http.ResponseWriter, *http.Request, error)
+}
+
+func routeWithMiddleware(
+	mux *http.ServeMux,
+	middleware ...func(http.ResponseWriter, *http.Request) (http.ResponseWriter, *http.Request, error),
+) *router {
+	router := router{
+		mux:        mux,
+		middleware: nil,
+	}
+	for _, v := range middleware {
+		router.middleware = append(router.middleware, v)
+	}
+	return &router
+}
+
+func (router *router) route(
+	pattern string,
+	handler func(http.ResponseWriter, *http.Request) error,
+) {
+	router.mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		for _, v := range router.middleware {
+			w, r, err = v(w, r)
+			if err != nil {
+				apperrors.HandlerError(w, r, err)
+				return
+			}
+		}
+		if err := handler(w, r); err != nil {
+			apperrors.HandlerError(w, r, err)
+		}
+	})
 }
 
 func run() error {
@@ -122,12 +161,16 @@ func run() error {
 	}
 	sorageService := storage.NewService(minioClient)
 
-	//==========Server==========
+	//==========ROUTER==========
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /api/register", authHandler.Register)
-	mux.HandleFunc("POST /api/login", authHandler.Login)
-	mux.HandleFunc("POST /api/token", authHandler.GetAccessToken)
-	mux.HandleFunc("GET /api/me", requireAuth(userHandler.GetMe))
+	root := routeWithMiddleware(mux)
+	authn := routeWithMiddleware(mux, requireAuth)
+
+	//==========Server==========
+	root.route("POST /api/register", authHandler.Register)
+	root.route("POST /api/login", authHandler.Login)
+	root.route("POST /api/token", authHandler.GetAccessToken)
+	authn.route("GET /api/me", userHandler.GetMe)
 	mux.HandleFunc("PATCH /api/me", requireAuth(userHandler.UpdateMe))
 	mux.HandleFunc("DELETE /api/me", requireAuth(userHandler.DisableMe))
 
