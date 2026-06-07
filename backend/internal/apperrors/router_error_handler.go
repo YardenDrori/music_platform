@@ -7,33 +7,6 @@ import (
 	"net/http"
 )
 
-type errBase struct {
-	InternalMessage string
-	PublicMessage   string
-	Cause           error
-}
-
-func (e *errBase) Error() string {
-	if e.InternalMessage != "" {
-		return e.InternalMessage
-	}
-	return e.PublicMessage
-}
-
-func (e *errBase) Unwrap() error { return e.Cause }
-
-type ErrUnauthenticated struct{ errBase }
-
-type ErrBadToken struct{ errBase }
-
-type ErrForbidden struct{ errBase }
-
-type ErrNotFound struct{ errBase }
-
-type ErrConflict struct{ errBase }
-
-type ErrBadRequest struct{ errBase }
-
 func writeInternalError(w http.ResponseWriter) {
 	writeError(w, http.StatusInternalServerError, "Internal server error")
 }
