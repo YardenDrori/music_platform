@@ -15,3 +15,15 @@ type Repository interface {
 	UpdateArtist(ctx context.Context, req UpdateArtistReq) error
 	DeleteArtist(ctx context.Context, id uuid.UUID) error
 }
+
+type Service interface {
+	NewArtist(ctx context.Context, req NewArtistReq) error
+
+	GetArtistsByName(ctx context.Context, name string) ([]*Artist, error)
+	GetArtistByID(ctx context.Context, id uuid.UUID) (*Artist, error)
+
+	UpdateArtistDetails(ctx context.Context, req UpdateArtistReq) error
+
+	SoftDeleteArtist(ctx context.Context, id uuid.UUID) error
+	HardDeleteArtist(ctx context.Context, id uuid.UUID) error
+}
