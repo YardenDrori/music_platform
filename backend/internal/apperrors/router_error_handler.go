@@ -25,6 +25,11 @@ func HandlerError(w http.ResponseWriter, r *http.Request, err error) {
 		writeInternalError(w)
 		return
 	}
+	if e, ok := errors.AsType[*ErrInternal](err); ok {
+		slog.Info("internal", "method", r.Method, "path", r.URL.Path, "error", e)
+		resolveError(w, http.StatusInternalServerError, "internal error", &e.errBase)
+		return
+	}
 	if e, ok := errors.AsType[*ErrUnauthenticated](err); ok {
 		slog.Info("unauthenticated", "method", r.Method, "path", r.URL.Path, "error", e)
 		resolveError(w, http.StatusUnauthorized, "unauthenticated", &e.errBase)

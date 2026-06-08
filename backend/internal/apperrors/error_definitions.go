@@ -31,6 +31,8 @@ type ErrConflict struct{ errBase }
 
 type ErrBadRequest struct{ errBase }
 
+type ErrInternal struct{ errBase }
+
 func NewErrUnauthenticated(
 	pubErrorMessage string,
 ) *ErrUnauthenticated {
@@ -147,6 +149,26 @@ func (e *ErrBadRequest) WithInternal(msg string) *ErrBadRequest {
 }
 
 func (e *ErrBadRequest) WithCause(err error) *ErrBadRequest {
+	e.Cause = err
+	return e
+}
+
+func NewErrInternal(
+	publicMessage string,
+) *ErrInternal {
+	return &ErrInternal{
+		errBase{
+			PublicMessage: publicMessage,
+		},
+	}
+}
+
+func (e *ErrInternal) WithInternal(msg string) *ErrInternal {
+	e.InternalMessage = msg
+	return e
+}
+
+func (e *ErrInternal) WithCause(err error) *ErrInternal {
 	e.Cause = err
 	return e
 }
