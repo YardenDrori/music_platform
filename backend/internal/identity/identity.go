@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+
+	"github.com/YardenDrori/music-platform/internal/apperrors"
 )
 
 type contextUserID struct{}
@@ -12,8 +14,11 @@ func WithUserID(ctx context.Context, id uuid.UUID) context.Context {
 	return context.WithValue(ctx, contextUserID{}, id)
 }
 
-func UserIDFromContext(ctx context.Context) (uuid.UUID, bool) {
+func UserIDFromContext(ctx context.Context) (uuid.UUID, error) {
 	id, ok := ctx.Value(contextUserID{}).(uuid.UUID)
-
-	return id, ok
+	if !ok {
+		return uuid.Nil, apperrors.NewErrUnauthenticated("unauthenticated").
+			WithInternal("identity missing from context, possible middleware bypass")
+	}
+	return id, nil
 }
