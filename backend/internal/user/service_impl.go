@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -29,12 +30,13 @@ func NewService(repo repository, hasher passwordHasher) Service {
 // [ErrUnauthenticated]
 // [ErrForbidden]
 func requireSelf(ctx context.Context, id uuid.UUID) error {
-	requesterID, ok := identity.UserIDFromContext(ctx)
-	if !ok {
-		return apperrors.ErrUnauthenticated
+	requesterID, err := identity.UserIDFromContext(ctx)
+	if err != nil {
+		return err
 	}
 	if id != requesterID {
-		return apperrors.ErrForbidden
+		return apperrors.NewErrForbidden("forbidden").
+			WithInternal(fmt.Sprintf("user with id %s attempted to reach an endpoint as user %s", requesterID, id))
 	}
 	return nil
 }
@@ -47,18 +49,18 @@ func validateAccountBusinessRules(user *User) error {
 		utf8.RuneCountInString(user.FirstName) < 3 ||
 		utf8.RuneCountInString(user.LastName) < 3 ||
 		utf8.RuneCountInString(user.PasswordHash) < 32 {
-		return &apperrors.ErrBadRequest{Message: "fields missing or too short"}
+		return apperrors.NewErrBadRequest("fields missing or too short")
 	}
 	//user verif pain here
 	if strings.Contains(user.Username, "@") {
-		return &apperrors.ErrBadRequest{Message: "invalid username"}
+		return apperrors.NewErrBadRequest("invalid username")
 	}
 
 	//email verif pain here!
 	emailPrefix, emailPostfix, ok := strings.Cut(user.Email, "@")
 	if !ok || emailPrefix == "" || emailPostfix == "" || !strings.Contains(emailPostfix, ".") ||
 		strings.Contains(emailPostfix, "@") {
-		return &apperrors.ErrBadRequest{Message: "invalid email address"}
+		return apperrors.NewErrBadRequest("invalid Email address")
 	}
 	return nil
 }
@@ -99,47 +101,28 @@ func (s *service) Authenticate(
 	var user *User
 	var err error
 	if strings.Contains(identifier, "@") {
-		user, err = s.findByEmail(ctx, identifier)
+		user, err = s.repo.FindByEmail(ctx, identifier)
 	} else {
-		user, err = s.findByUsername(ctx, identifier)
+		user, err = s.repo.FindByUsername(ctx, identifier)
+	}
+	if _, ok := errors.AsType[*apperrors.ErrNotFound](err); ok {
+		e := apperrors.NewErrUnauthenticated("incorrect credentials").WithCause(err)
+		return nil, fmt.Errorf("authenticating user: %w", e)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("authenticating user: %w", apperrors.ErrNotFound)
+		return nil, fmt.Errorf("authenticating user: %w", err)
 	}
 
 	passwordsMatch, err := s.passwordHasher.verifyPassword(password, user.PasswordHash)
 	if err != nil {
-		return nil, fmt.Errorf("authenticating user: %w", apperrors.ErrUnauthenticated)
+		return nil, fmt.Errorf("authenticating user: %w", err)
 	}
-	if passwordsMatch {
-		return user, nil
+	if !passwordsMatch {
+		return nil, fmt.Errorf(
+			"authenticating user: %w",
+			apperrors.NewErrUnauthenticated("incorrect username or password"),
+		)
 	}
-	return nil, apperrors.ErrUnauthenticated
-}
-
-func (s *service) findByEmail(ctx context.Context, email string) (*User, error) {
-	if email == "" {
-		return nil, &apperrors.ErrBadRequest{Message: "email not provided"}
-	}
-
-	user, err := s.repo.FindByEmail(ctx, email)
-	if err != nil {
-		return nil, fmt.Errorf("finding user by email: %w", err)
-	}
-
-	return user, nil
-}
-
-func (s *service) findByUsername(ctx context.Context, username string) (*User, error) {
-	if username == "" {
-		return nil, &apperrors.ErrBadRequest{Message: "username not provided"}
-	}
-
-	user, err := s.repo.FindByUsername(ctx, username)
-	if err != nil {
-		return nil, fmt.Errorf("finding user by username: %w", err)
-	}
-
 	return user, nil
 }
 
@@ -148,7 +131,7 @@ func (s *service) findByUsername(ctx context.Context, username string) (*User, e
 // [ErrForbidden]
 // [ErrNotFound]
 // [errorf]
-func (s *service) FindByUUID(ctx context.Context, id uuid.UUID) (*User, error) {
+func (s *service) FindByUUIDInternal(ctx context.Context, id uuid.UUID) (*User, error) {
 	if err := requireSelf(ctx, id); err != nil {
 		return nil, err
 	}
@@ -158,6 +141,17 @@ func (s *service) FindByUUID(ctx context.Context, id uuid.UUID) (*User, error) {
 		return nil, fmt.Errorf("finding user by id: %w", err)
 	}
 
+	return user, nil
+}
+
+func (s *service) FindByUUIDPublic(ctx context.Context, id uuid.UUID) (*User, error) {
+	user, err := s.FindByUUIDInternal(ctx, id)
+	if _, ok := errors.AsType[*apperrors.ErrNotFound](err); ok {
+		return nil, apperrors.NewErrUnauthenticated("unauthenticated")
+	}
+	if err != nil {
+		return nil, err
+	}
 	return user, nil
 }
 
@@ -172,7 +166,7 @@ func (s *service) UpdateAccount(ctx context.Context, user *NewUserRequest) error
 		return err
 	}
 
-	currUserInfo, err := s.FindByUUID(ctx, user.ID)
+	currUserInfo, err := s.repo.FindByID(ctx, user.ID)
 	if err != nil {
 		return fmt.Errorf("updating user profile: fetching account info: %w", err)
 	}

@@ -2,9 +2,7 @@ package user
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/YardenDrori/music-platform/internal/apperrors"
@@ -20,14 +18,17 @@ func NewHandler(service Service) *handler {
 }
 
 func (h *handler) GetMe(w http.ResponseWriter, r *http.Request) error {
-	id, ok := identity.UserIDFromContext(r.Context())
-	if !ok {
-		return apperrors.NewErrUnathenticated("", "Unauthenticated", nil)
+	id, err := identity.UserIDFromContext(r.Context())
+	if err != nil {
+		return fmt.Errorf("getting own account details: %w", err)
 	}
 
-	user, err := h.service.FindByUUID(r.Context(), id)
+	user, err := h.service.FindByUUIDInternal(r.Context(), id)
 	if err != nil {
-		return err
+		e := apperrors.NewErrInternal("").
+			WithInternal("failed to get account details despite valid token").
+			WithCause(err)
+		return fmt.Errorf("getting own account details: %w", e)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -54,12 +55,12 @@ func (h *handler) UpdateMe(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *handler) DisableMe(w http.ResponseWriter, r *http.Request) error {
-	id, ok := identity.UserIDFromContext(r.Context())
-	if !ok {
-		return apperrors.NewErrUnathenticated("unauthenticated")
+	id, err := identity.UserIDFromContext(r.Context())
+	if err != nil {
+		return fmt.Errorf("disabling own account: %w", err)
 	}
 
-	err := h.service.DeactivateAccount(r.Context(), id)
+	err = h.service.DeactivateAccount(r.Context(), id)
 	if err != nil {
 		return err
 	}

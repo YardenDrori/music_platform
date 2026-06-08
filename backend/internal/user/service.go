@@ -33,7 +33,8 @@ type Service interface {
 	// [ErrForbidden]
 	// [ErrNotFound]
 	// [errorf]
-	FindByUUID(ctx context.Context, id uuid.UUID) (*User, error)
+	FindByUUIDPublic(ctx context.Context, id uuid.UUID) (*User, error)
+	FindByUUIDInternal(ctx context.Context, id uuid.UUID) (*User, error)
 
 	// errors:
 	// ErrBadRequest,

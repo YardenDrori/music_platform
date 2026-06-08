@@ -31,16 +31,17 @@ func (r *postgresRepository) Create(ctx context.Context, u *User) error {
 		u.PasswordHash, u.CreatedAt, u.Active,
 	)
 
-	if err == nil {
-		return nil
-	}
-	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-		if pgErr.Code == "23505" {
-			return apperrors.ErrConflict
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" {
+				return apperrors.NewErrConflict("already exists").
+					WithInternal(pgErr.Detail).
+					WithCause(err)
+			}
 		}
+		return fmt.Errorf("creating new user in postgres db: %w", err)
 	}
-
-	return fmt.Errorf("creating new user in postgres db: %w", err)
+	return nil
 }
 
 // errors:
@@ -53,16 +54,17 @@ func (r *postgresRepository) Update(ctx context.Context, u *User) error {
 		u.Email, u.Username, u.FirstName, u.LastName, u.PasswordHash, u.Active, u.ID,
 	)
 
-	if err == nil {
-		return nil
-	}
-	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-		if pgErr.Code == "23505" {
-			return apperrors.ErrConflict
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" {
+				return apperrors.NewErrConflict("already exists").
+					WithInternal(pgErr.Detail).
+					WithCause(err)
+			}
 		}
+		return fmt.Errorf("creating new user in postgres db: %w", err)
 	}
-
-	return fmt.Errorf("updating user: %w", err)
+	return nil
 }
 
 func (r *postgresRepository) Delete(ctx context.Context, id uuid.UUID) error {
@@ -84,7 +86,7 @@ func (r *postgresRepository) FindByEmail(ctx context.Context, email string) (*Us
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, apperrors.ErrNotFound
+			return nil, apperrors.NewErrNotFound("user not found")
 		}
 		return nil, fmt.Errorf("finding user by email: %w", err)
 	}
@@ -106,7 +108,7 @@ func (r *postgresRepository) FindByID(ctx context.Context, id uuid.UUID) (*User,
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, apperrors.ErrNotFound
+			return nil, apperrors.NewErrNotFound("user not found")
 		}
 		return nil, fmt.Errorf("finding user by uuid: %w", err)
 	}
@@ -125,7 +127,7 @@ func (r *postgresRepository) FindByUsername(ctx context.Context, username string
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, apperrors.ErrNotFound
+			return nil, apperrors.NewErrNotFound("user not found")
 		}
 		return nil, fmt.Errorf("finding user by username: %w", err)
 	}
