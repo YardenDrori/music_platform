@@ -16,7 +16,7 @@ func NewRequireAuth(
 	return func(w http.ResponseWriter, r *http.Request) (http.ResponseWriter, *http.Request, error) {
 		header := r.Header.Get("Authorization")
 		if header == "" {
-			return w, r, apperrors.NewErrUnathenticated("Authorization header required")
+			return w, r, apperrors.NewErrUnauthenticated("Authorization header required")
 		}
 
 		token, ok := strings.CutPrefix(header, "Bearer ")
