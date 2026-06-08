@@ -13,14 +13,6 @@ func (e *errBase) Error() string {
 	return e.PublicMessage
 }
 
-func (e *errBase) WithInternalMSG(internalErrorMessage string) {
-	e.InternalMessage = internalErrorMessage
-}
-
-func (e *errBase) WithCause(cause error) {
-	e.Cause = cause
-}
-
 func (e *errBase) Unwrap() error { return e.Cause }
 
 type ErrUnauthenticated struct{ errBase }
@@ -45,6 +37,16 @@ func NewErrUnathenticated(
 	}
 }
 
+func (e *ErrUnauthenticated) WithInternal(msg string) *ErrUnauthenticated {
+	e.InternalMessage = msg
+	return e
+}
+
+func (e *ErrUnauthenticated) WithCause(err error) *ErrUnauthenticated {
+	e.Cause = err
+	return e
+}
+
 func NewErrBadToken(
 	publicMessage string,
 ) *ErrBadToken {
@@ -53,6 +55,16 @@ func NewErrBadToken(
 			PublicMessage: publicMessage,
 		},
 	}
+}
+
+func (e *ErrBadToken) WithInternal(msg string) *ErrBadToken {
+	e.InternalMessage = msg
+	return e
+}
+
+func (e *ErrBadToken) WithCause(err error) *ErrBadToken {
+	e.Cause = err
+	return e
 }
 
 func NewErrForbidden(
@@ -65,6 +77,16 @@ func NewErrForbidden(
 	}
 }
 
+func (e *ErrForbidden) WithInternal(msg string) *ErrForbidden {
+	e.InternalMessage = msg
+	return e
+}
+
+func (e *ErrForbidden) WithCause(err error) *ErrForbidden {
+	e.Cause = err
+	return e
+}
+
 func NewErrNotFound(
 	publicMessage string,
 ) *ErrNotFound {
@@ -73,6 +95,16 @@ func NewErrNotFound(
 			PublicMessage: publicMessage,
 		},
 	}
+}
+
+func (e *ErrNotFound) WithInternal(msg string) *ErrNotFound {
+	e.InternalMessage = msg
+	return e
+}
+
+func (e *ErrNotFound) WithCause(err error) *ErrNotFound {
+	e.Cause = err
+	return e
 }
 
 func NewErrConflict(
@@ -85,6 +117,16 @@ func NewErrConflict(
 	}
 }
 
+func (e *ErrConflict) WithInternal(msg string) *ErrConflict {
+	e.InternalMessage = msg
+	return e
+}
+
+func (e *ErrConflict) WithCause(err error) *ErrConflict {
+	e.Cause = err
+	return e
+}
+
 func NewErrBadRequest(
 	publicMessage string,
 ) *ErrBadRequest {
@@ -93,4 +135,14 @@ func NewErrBadRequest(
 			PublicMessage: publicMessage,
 		},
 	}
+}
+
+func (e *ErrBadRequest) WithInternal(msg string) *ErrBadRequest {
+	e.InternalMessage = msg
+	return e
+}
+
+func (e *ErrBadRequest) WithCause(err error) *ErrBadRequest {
+	e.Cause = err
+	return e
 }
