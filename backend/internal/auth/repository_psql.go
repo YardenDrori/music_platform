@@ -40,7 +40,7 @@ func (r *postgresRepository) NewToken(
 	}
 	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		if pgErr.Code == "23505" {
-			return apperrors.ErrConflict
+			return apperrors.NewErrConflict("already exists").WithCause(pgErr)
 		}
 	}
 	return fmt.Errorf("creating token user in postgres db: %w", err)
@@ -59,7 +59,7 @@ func (r *postgresRepository) FindToken(
 		return &owner, nil
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, apperrors.ErrNotFound
+		return nil, apperrors.NewErrBadToken("token invalid or expired").WithCause(err)
 	}
 	return nil, fmt.Errorf("verifying token against db: %w", err)
 }
