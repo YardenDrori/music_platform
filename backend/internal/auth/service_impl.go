@@ -47,7 +47,7 @@ func (s *service) Register(
 ) (*authServiceResponse, *user.User, error) {
 	if req.Email == "" || req.FirstName == "" || req.LastName == "" || req.Password == "" ||
 		req.UserName == "" {
-		return nil, nil, &apperrors.ErrBadRequest{Message: "missing fields"}
+		return nil, nil, apperrors.NewErrBadRequest("missing username")
 	}
 
 	//email verif
@@ -56,11 +56,11 @@ func (s *service) Register(
 		"@",
 	); !ok || after == "" || before == "" ||
 		strings.ContainsRune(after, '@') || !strings.Contains(after, ".") {
-		return nil, nil, &apperrors.ErrBadRequest{Message: "invalid email"}
+		return nil, nil, apperrors.NewErrBadRequest("invalid email address")
 	}
 
 	if utf8.RuneCountInString(req.Password) < 8 {
-		return nil, nil, &apperrors.ErrBadRequest{Message: "password too short"}
+		return nil, nil, apperrors.NewErrBadRequest("password under 8 characters")
 	}
 
 	newUserReq := user.NewUserRequest{
@@ -77,18 +77,13 @@ func (s *service) Register(
 	for range 3 {
 		newUserReq.ID = uuid.New()
 		newUser, repoErr = s.userService.NewAccount(ctx, &newUserReq)
-		if !errors.Is(repoErr, apperrors.ErrConflict) {
+		if _, ok := errors.AsType[*apperrors.ErrConflict](repoErr); !ok {
 			break
 		}
-		slog.Info("congratulation you should take a lottery ticket now!")
+		slog.Warn("congratulation you should take a lottery ticket now!")
 	}
-	switch {
-	case repoErr == nil:
-		break
-	case errors.Is(repoErr, apperrors.ErrConflict):
-		return nil, nil, &apperrors.ErrBadRequest{Message: "email or username unavailable"}
-	default:
-		return nil, nil, fmt.Errorf("attempting to create new user: %w", repoErr)
+	if repoErr != nil {
+		return nil, nil, fmt.Errorf("registering %w", repoErr)
 	}
 
 	tokens, err := s.tokenizer.GenerateTokenPair(newUserReq.ID)
@@ -104,7 +99,7 @@ func (s *service) Register(
 			time.Now().UTC(),
 			time.Now().UTC().Add(tokens.refreshDur),
 		)
-		if !errors.Is(err, apperrors.ErrConflict) {
+		if _, ok := errors.AsType[*apperrors.ErrConflict](repoErr); !ok {
 			break
 		}
 		slog.Info("congratulation you should take a lottery ticket now!")
@@ -137,11 +132,7 @@ func (s *service) Login(
 	case req.UserName != nil && *req.UserName != "":
 		user, err = s.userService.Authenticate(ctx, *req.UserName, req.Password)
 	default:
-		return nil, nil, &apperrors.ErrBadRequest{Message: "missing credentials"}
-	}
-
-	if errors.Is(err, apperrors.ErrNotFound) || errors.Is(err, apperrors.ErrUnauthenticated) {
-		return nil, nil, apperrors.ErrUnauthenticated
+		return nil, nil, apperrors.NewErrBadRequest("missing credentials")
 	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("logging in: %w", err)
@@ -161,7 +152,7 @@ func (s *service) Login(
 			time.Now().UTC(),
 			time.Now().UTC().Add(tokens.refreshDur),
 		)
-		if !errors.Is(err, apperrors.ErrConflict) {
+		if _, ok := errors.AsType[*apperrors.ErrConflict](err); !ok {
 			break
 		}
 		slog.Info("congratulation you should take a lottery ticket now!")
@@ -183,30 +174,24 @@ func (s *service) RequestAccessToken(
 	oldRawToken string,
 ) (*authServiceResponse, error) {
 	if oldRawToken == "" {
-		return nil, &apperrors.ErrBadRequest{Message: "token not provided"}
+		return nil, apperrors.NewErrBadRequest("token not provided")
 	}
 
 	originalRefreshHash := s.tokenHasher.hashToken(oldRawToken)
 
 	owner, err := s.repo.FindToken(ctx, originalRefreshHash)
-
-	switch {
-	case err == nil:
-		break
-	case errors.Is(err, apperrors.ErrNotFound):
-		return nil, apperrors.ErrBadToken
-	default:
-		return nil, fmt.Errorf("finding token: %w", err)
+	if err != nil {
+		return nil, fmt.Errorf("requesting new access token: %w", err)
 	}
 
 	tokens, err := s.tokenizer.GenerateTokenPair(*owner)
 	if err != nil {
-		return nil, fmt.Errorf("requesting new access token with refresh token cycling: %w", err)
+		return nil, fmt.Errorf("requesting new access token: %w", err)
 	}
 
 	err = s.repo.DeleteToken(ctx, *owner, originalRefreshHash)
 	if err != nil {
-		return nil, fmt.Errorf("requesting new access token with refresh token cycling: %w", err)
+		return nil, fmt.Errorf("requesting new access token: %w", err)
 	}
 
 	err = s.repo.NewToken(
@@ -225,5 +210,4 @@ func (s *service) RequestAccessToken(
 		refreshToken:   tokens.rawRefreshToken,
 		refreshExpirey: time.Now().UTC().Add(tokens.refreshDur),
 	}, nil
-
 }
