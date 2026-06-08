@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/YardenDrori/music-platform/internal/apperrors"
 )
 
 type handler struct {
@@ -82,7 +84,7 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) error {
 func (h *handler) GetAccessToken(w http.ResponseWriter, r *http.Request) error {
 	cookie, err := r.Cookie("refresh-token")
 	if err != nil {
-		return err
+		return apperrors.NewErrBadRequest("refresh-token missing").WithCause(err)
 	}
 
 	refreshToken := cookie.Value

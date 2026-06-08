@@ -34,7 +34,7 @@ func (h *handler) GetMe(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(user); err != nil {
-		return fmt.Errorf("encoding response", "error", err)
+		return fmt.Errorf("encoding response: %w", err)
 	}
 	return nil
 }
