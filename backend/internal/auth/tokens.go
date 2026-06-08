@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"crypto/rand"
-	"errors"
 	"fmt"
 	"time"
 
@@ -91,25 +90,22 @@ func (t *JWTTokenizerHS256) ValidateAccessToken(
 	token string,
 ) (*Claims, error) {
 	if token == "" {
-		return nil, &apperrors.ErrBadRequest{Message: "token not provided"}
+		return nil, apperrors.NewErrBadRequest("token not provided")
 	}
 
 	claims := &Claims{}
-
 	_, err := jwt.ParseWithClaims(token, claims,
 		func(tok *jwt.Token) (any, error) {
 			if tok.Method != jwt.SigningMethodHS256 {
-				return nil, fmt.Errorf("invalid signing method")
+				return nil, fmt.Errorf("invalid signing method: %s", tok.Method)
 			}
 			return t.signingKey, nil
 		})
-
-	switch {
-	case err == nil:
-		return claims, nil
-	case errors.Is(err, jwt.ErrTokenExpired):
-		return nil, apperrors.ErrBadToken
-	default:
-		return nil, fmt.Errorf("validating token: %w", err)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"validating access token: %w",
+			apperrors.NewErrBadToken("token invalid or expired").WithCause(err),
+		)
 	}
+	return claims, nil
 }
