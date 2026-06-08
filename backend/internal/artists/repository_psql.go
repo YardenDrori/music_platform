@@ -126,7 +126,7 @@ func (r *postgresRepository) GetArtistByID(ctx context.Context, id uuid.UUID) (*
 	return artist, nil
 }
 
-func (r *postgresRepository) UpdateArtist(ctx context.Context, req UpdateArtistReq) error {
+func (r *postgresRepository) UpdateArtist(ctx context.Context, req *UpdateArtistReq) error {
 	setClauses := []string{"updated_at = NOW()"}
 	args := []any{}
 	i := 1

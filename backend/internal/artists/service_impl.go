@@ -120,8 +120,8 @@ func (s *service) GetArtistByID(ctx context.Context, id uuid.UUID) (*Artist, err
 	return artist, nil
 }
 
-func (s *service) UpdateArtistDetails(ctx context.Context, req UpdateArtistReq) error {
-	if err := validateUpdateReq(&req); err != nil {
+func (s *service) UpdateArtistDetails(ctx context.Context, req *UpdateArtistReq) error {
+	if err := validateUpdateReq(req); err != nil {
 		return fmt.Errorf("updating artist: %w", err)
 	}
 	if err := s.repo.UpdateArtist(ctx, req); err != nil {
@@ -132,7 +132,7 @@ func (s *service) UpdateArtistDetails(ctx context.Context, req UpdateArtistReq) 
 
 func (s *service) SoftDeleteArtist(ctx context.Context, id uuid.UUID) error {
 	now := time.Now().UTC()
-	err := s.repo.UpdateArtist(ctx, UpdateArtistReq{ID: id, DeletedAt: &now})
+	err := s.repo.UpdateArtist(ctx, &UpdateArtistReq{ID: id, DeletedAt: &now})
 	if err != nil {
 		return fmt.Errorf("soft deleting artist: %w", err)
 	}
