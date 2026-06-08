@@ -31,9 +31,9 @@ func NewRequireAuth(
 
 		userID, err := uuid.Parse(claims.Subject)
 		if err != nil {
-			e := apperrors.NewErrBadToken("bad token")
-			e.WithInternalMSG("user tried to login with a valid token that has invalid uuid syntax")
-			e.WithCause(err)
+			e := apperrors.NewErrBadToken("bad token").
+				WithInternal("user tried to login with a valid token that has invalid uuid syntax").
+				WithCause(err)
 			return w, r, e
 		}
 
