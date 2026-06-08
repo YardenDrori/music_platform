@@ -17,7 +17,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"golang.org/x/tools/go/analysis/passes/stringintconv"
 
 	"github.com/YardenDrori/music-platform/internal/apperrors"
 	"github.com/YardenDrori/music-platform/internal/auth"
@@ -94,13 +93,13 @@ func run() error {
 	storageSecretAccessKey := os.Getenv("STORAGE_SECRET_ACCESS_KEY")
 	storageIsSecureStr := os.Getenv("STORAGE_IS_SECURE")
 	if storageEndpoint == "" {
-		return fmt.Errorf("storage endpoint not present in env: %w", err)
+		return fmt.Errorf("storage endpoint not present in env")
 	}
 	if storageAccessKey == "" {
-		return fmt.Errorf("storage access key not present in env: %w", err)
+		return fmt.Errorf("storage access key not present in env")
 	}
 	if storageSecretAccessKey == "" {
-		return fmt.Errorf("storage secret access key not present in env: %w", err)
+		return fmt.Errorf("storage secret access key not present in env")
 	}
 	if storageIsSecureStr == "" {
 		return fmt.Errorf("storage is secure not present in env")
@@ -159,7 +158,7 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("failed to instantiate minioClient: %w", err)
 	}
-	sorageService := storage.NewService(minioClient)
+	storageService := storage.NewService(minioClient)
 
 	//==========ROUTER==========
 	mux := http.NewServeMux()
@@ -171,8 +170,8 @@ func run() error {
 	root.route("POST /api/login", authHandler.Login)
 	root.route("POST /api/token", authHandler.GetAccessToken)
 	authn.route("GET /api/me", userHandler.GetMe)
-	mux.HandleFunc("PATCH /api/me", requireAuth(userHandler.UpdateMe))
-	mux.HandleFunc("DELETE /api/me", requireAuth(userHandler.DisableMe))
+	authn.route("PATCH /api/me", userHandler.UpdateMe)
+	authn.route("DELETE /api/me", userHandler.DisableMe)
 
 	log.Println("server starting on :8080")
 	return http.ListenAndServe(":8080", mux)
