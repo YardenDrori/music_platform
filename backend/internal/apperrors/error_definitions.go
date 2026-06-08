@@ -7,10 +7,14 @@ type errBase struct {
 }
 
 func (e *errBase) Error() string {
-	if e.InternalMessage != "" {
-		return e.InternalMessage
+	msg := e.InternalMessage
+	if msg == "" {
+		msg = e.PublicMessage
 	}
-	return e.PublicMessage
+	if e.Cause != nil {
+		return msg + ": " + e.Cause.Error()
+	}
+	return msg
 }
 
 func (e *errBase) Unwrap() error { return e.Cause }
