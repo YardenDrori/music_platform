@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/YardenDrori/music-platform/internal/apperrors"
+	"github.com/YardenDrori/music-platform/internal/identity"
 )
 
 type service struct {
@@ -22,31 +23,31 @@ func NewService(repo Repository) Service {
 
 func validateArtist(artist *Artist) error {
 	if artist.Name == "" {
-		return &apperrors.ErrBadRequest{Message: "artist name cannot be empty"}
+		return apperrors.NewErrBadRequest("artist name cannot be empty")
 	}
 	if artist.BirthPlace != nil && utf8.RuneCountInString(*artist.BirthPlace) != 2 {
-		return &apperrors.ErrBadRequest{Message: "birth place must be 2 characters"}
+		return apperrors.NewErrBadRequest("birth place must be 2 characters")
 	}
 	if artist.BirthDate != nil && artist.BirthDate.After(time.Now()) {
-		return &apperrors.ErrBadRequest{Message: "birth date cannot be in the future"}
+		return apperrors.NewErrBadRequest("birth date cannot be in the future")
 	}
 
 	if artist.LinkToYouTube != nil {
 		u, err := url.Parse(*artist.LinkToYouTube)
 		if err != nil || u.Host == "" {
-			return &apperrors.ErrBadRequest{Message: "link to youtube is not a valid url"}
+			return apperrors.NewErrBadRequest("link to youtube is not a valid url")
 		}
 	}
 	if artist.LinkToSpotify != nil {
 		u, err := url.Parse(*artist.LinkToSpotify)
 		if err != nil || u.Host == "" {
-			return &apperrors.ErrBadRequest{Message: "link to spotify is not a valid url"}
+			return apperrors.NewErrBadRequest("link to spotify is not a valid url")
 		}
 	}
 	if artist.LinkToAppleMusic != nil {
 		u, err := url.Parse(*artist.LinkToAppleMusic)
 		if err != nil || u.Host == "" {
-			return &apperrors.ErrBadRequest{Message: "link to apple music is not a valid url"}
+			return apperrors.NewErrBadRequest("link to apple music is not a valid url")
 		}
 	}
 
@@ -55,42 +56,48 @@ func validateArtist(artist *Artist) error {
 
 func validateUpdateReq(req *UpdateArtistReq) error {
 	if req.Name != nil && *req.Name == "" {
-		return &apperrors.ErrBadRequest{Message: "artist name cannot be empty"}
+		return apperrors.NewErrBadRequest("artist name cannot be empty")
 	}
 	if req.BirthPlace != nil && utf8.RuneCountInString(*req.BirthPlace) != 2 {
-		return &apperrors.ErrBadRequest{Message: "birth place must be 2 characters"}
+		return apperrors.NewErrBadRequest("birth place must be 2 characters")
 	}
 	if req.BirthDate != nil && req.BirthDate.After(time.Now()) {
-		return &apperrors.ErrBadRequest{Message: "birth date cannot be in the future"}
+		return apperrors.NewErrBadRequest("birth date cannot be in the future")
 	}
 	if req.LinkToYouTube != nil {
 		u, err := url.Parse(*req.LinkToYouTube)
 		if err != nil || u.Host == "" {
-			return &apperrors.ErrBadRequest{Message: "link to youtube is not a valid url"}
+			return apperrors.NewErrBadRequest("link to youtube is not a valid url")
 		}
 	}
 	if req.LinkToSpotify != nil {
 		u, err := url.Parse(*req.LinkToSpotify)
 		if err != nil || u.Host == "" {
-			return &apperrors.ErrBadRequest{Message: "link to spotify is not a valid url"}
+			return apperrors.NewErrBadRequest("link to spotify is not a valid url")
 		}
 	}
 	if req.LinkToAppleMusic != nil {
 		u, err := url.Parse(*req.LinkToAppleMusic)
 		if err != nil || u.Host == "" {
-			return &apperrors.ErrBadRequest{Message: "link to apple music is not a valid url"}
+			return apperrors.NewErrBadRequest("link to apple music is not a valid url")
 		}
 	}
 	return nil
 }
 
 func (s *service) NewArtist(ctx context.Context, req NewArtistReq) error {
+	requesterID, err := identity.UserIDFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("registering new artist: %w", err)
+	}
+
 	artist := req.ToArtist()
+	artist.UploaderID = requesterID
 	if err := validateArtist(&artist); err != nil {
 		return fmt.Errorf("creating artist: %w", err)
 	}
 
-	err := s.repo.NewArtist(ctx, artist)
+	err = s.repo.NewArtist(ctx, artist)
 	if err != nil {
 		return fmt.Errorf("creating artist: %w", err)
 	}

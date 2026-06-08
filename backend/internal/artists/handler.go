@@ -1,14 +1,10 @@
 package artists
 
 import (
-	"context"
 	"encoding/json"
-	"log/slog"
 	"net/http"
 
-	"golang.org/x/text/message"
-
-	"github.com/YardenDrori/music-platform/internal/identity"
+	"github.com/YardenDrori/music-platform/internal/apperrors"
 )
 
 type handler struct {
@@ -26,23 +22,11 @@ func NewHandler(service Service) *handler {
 // 	SoftDeleteArtist(ctx context.Context, id uuid.UUID) error
 // 	HardDeleteArtist(ctx context.Context, id uuid.UUID) error
 
-
 func (h *handler) NewArtist(w http.ResponseWriter, r *http.Request) error {
-	requester_id, valid := identity.UserIDFromContext(r.Context())
-	if !valid {
-		writeError(w, http.StatusUnauthorized, "Unauthenticated")
-		return
-	}
-	var req *NewArtistReq
+	req := &NewArtistReq{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
-		return
+		return apperrors.NewErrBadRequest("invalid request body")
 	}
 
-	err = h.service.NewArtist(r.Context(),*req)
-	switch {
-		case err == nil:
-			break
-		case 
-	}
+	return h.service.NewArtist(r.Context(), *req)
 }
