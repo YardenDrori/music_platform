@@ -25,6 +25,8 @@ func HandlerError(w http.ResponseWriter, r *http.Request, err error) {
 		writeInternalError(w)
 		return
 	}
+	//this MUST be the first error we check cause an internal server error could
+	//have other errors wrapped inside of it
 	if e, ok := errors.AsType[*ErrInternal](err); ok {
 		slog.Info("internal", "method", r.Method, "path", r.URL.Path, "error", e)
 		resolveError(w, http.StatusInternalServerError, "internal error", &e.errBase)
