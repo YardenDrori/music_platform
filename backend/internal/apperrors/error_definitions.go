@@ -31,7 +31,7 @@ type ErrConflict struct{ errBase }
 
 type ErrBadRequest struct{ errBase }
 
-func NewErrUnathenticated(
+func NewErrUnauthenticated(
 	pubErrorMessage string,
 ) *ErrUnauthenticated {
 	return &ErrUnauthenticated{
