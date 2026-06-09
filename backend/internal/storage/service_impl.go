@@ -12,11 +12,33 @@ import (
 )
 
 type service struct {
-	s3Core *minio.Core
+	s3Core               *minio.Core
+	preginedURLsDuration time.Duration
 }
 
-func NewService(client *minio.Client) Service {
-	return &service{s3Core: &minio.Core{Client: client}}
+func NewService(client *minio.Client, presignedURLsDuration time.Duration) Service {
+	return &service{
+		s3Core:               &minio.Core{Client: client},
+		preginedURLsDuration: presignedURLsDuration,
+	}
+}
+
+func (s *service) PresignedUpload(
+	ctx context.Context,
+	bucketName string,
+	objectKey string,
+	opts minio.PutObjectOptions,
+) (*url.URL, error) {
+	uploadUrl, err := s.s3Core.PresignedPutObject(
+		ctx,
+		bucketName,
+		objectKey,
+		s.preginedURLsDuration,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("generating a presigned url for a put request: %w", err)
+	}
+	return uploadUrl, nil
 }
 
 func (s *service) InitiateMultipartUpload(
@@ -50,7 +72,7 @@ func (s *service) GetPresignedMultipartPartsURLs(
 			http.MethodPut,
 			bucketName,
 			objectKey,
-			time.Duration(15)*time.Minute,
+			s.preginedURLsDuration,
 			req,
 		)
 		if err != nil {

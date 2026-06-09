@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"net/url"
 
 	"github.com/minio/minio-go/v7"
 )
@@ -45,4 +46,13 @@ type Service interface {
 		objectKey string,
 		uploadID string,
 	) error
+
+	//erros:
+	//fmt
+	PresignedUpload(
+		ctx context.Context,
+		bucketName string,
+		objectKey string,
+		opts minio.PutObjectOptions,
+	) (*url.URL, error)
 }
