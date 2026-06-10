@@ -27,7 +27,6 @@ func (s *service) PresignedUpload(
 	ctx context.Context,
 	bucketName string,
 	objectKey string,
-	opts minio.PutObjectOptions,
 ) (*url.URL, error) {
 	uploadUrl, err := s.s3Core.PresignedPutObject(
 		ctx,
@@ -45,9 +44,14 @@ func (s *service) InitiateMultipartUpload(
 	ctx context.Context,
 	bucketName string,
 	objectKey string,
-	opts minio.PutObjectOptions,
+	opts PutOptions,
 ) (string, error) {
-	uploadID, err := s.s3Core.NewMultipartUpload(ctx, bucketName, objectKey, opts)
+	minioOpts := minio.PutObjectOptions{
+		ContentType:    opts.ContentType,
+		SendContentMd5: opts.SendContentMD5,
+	}
+
+	uploadID, err := s.s3Core.NewMultipartUpload(ctx, bucketName, objectKey, minioOpts)
 	if err != nil {
 		return "", fmt.Errorf("initiating new presigned multipart upload: %w", err)
 	}
@@ -90,15 +94,21 @@ func (s *service) CompleteMultipartUpload(
 	objectKey string,
 	uploadID string,
 	ETags []minio.CompletePart,
-	opts minio.PutObjectOptions,
+	opts PutOptions,
 ) error {
+
+	minioOpts := minio.PutObjectOptions{
+		ContentType:    opts.ContentType,
+		SendContentMd5: opts.SendContentMD5,
+	}
+
 	_, err := s.s3Core.CompleteMultipartUpload(
 		ctx,
 		bucketName,
 		objectKey,
 		uploadID,
 		ETags,
-		opts,
+		minioOpts,
 	)
 	if err != nil {
 		anotherErr := s.AbortMultipartUpload(context.Background(), bucketName, objectKey, uploadID)

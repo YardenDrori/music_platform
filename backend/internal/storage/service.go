@@ -7,6 +7,11 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
+type PutOptions struct {
+	ContentType    string
+	SendContentMD5 bool
+}
+
 type Service interface {
 	//errors:
 	//fmt
@@ -14,7 +19,7 @@ type Service interface {
 		ctx context.Context,
 		bucketName string,
 		objectKey string,
-		opts minio.PutObjectOptions,
+		opts PutOptions,
 	) (string, error)
 
 	//errors:
@@ -35,7 +40,7 @@ type Service interface {
 		objectKey string,
 		uploadID string,
 		ETags []minio.CompletePart,
-		opts minio.PutObjectOptions,
+		opts PutOptions,
 	) error
 
 	//errors:
@@ -53,6 +58,5 @@ type Service interface {
 		ctx context.Context,
 		bucketName string,
 		objectKey string,
-		opts minio.PutObjectOptions,
 	) (*url.URL, error)
 }
