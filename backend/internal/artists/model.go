@@ -20,5 +20,5 @@ type Artist struct {
 	AddedAt          time.Time  `json:"addedAt"`
 	UpdatedAt        time.Time  `json:"updatedAt"`
 	DeletedAt        *time.Time `json:"-"`
-	UploaderID       uuid.UUID  `json:"uploaderId"`
+	ContributorIDs   []uuid.UUID `json:"contributorIds"`
 }
