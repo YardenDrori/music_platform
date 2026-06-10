@@ -1,8 +1,14 @@
 package artists
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
+	"io"
+	"net/http"
 	"net/url"
 	"time"
 	"unicode/utf8"
@@ -10,15 +16,18 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/YardenDrori/music-platform/internal/apperrors"
+	"github.com/YardenDrori/music-platform/internal/constants"
 	"github.com/YardenDrori/music-platform/internal/identity"
+	"github.com/YardenDrori/music-platform/internal/storage"
 )
 
 type service struct {
-	repo Repository
+	repo    Repository
+	storage storage.Service
 }
 
-func NewService(repo Repository) Service {
-	return &service{repo: repo}
+func NewService(repo Repository, storage storage.Service) Service {
+	return &service{repo: repo, storage: storage}
 }
 
 func validateArtist(artist *Artist) error {
@@ -143,5 +152,68 @@ func (s *service) HardDeleteArtist(ctx context.Context, id uuid.UUID) error {
 	if err := s.repo.DeleteArtist(ctx, id); err != nil {
 		return fmt.Errorf("hard deleting artist: %w", err)
 	}
+	return nil
+}
+
+var allowedImageFormats = map[string]struct{}{
+	"image/jpeg": {},
+	"image/png":  {},
+}
+
+func (s *service) UploadArtistProfilePicture(
+	ctx context.Context,
+	file []byte,
+	artistID uuid.UUID,
+) error {
+	contentType := http.DetectContentType(file)
+
+	if _, ok := allowedImageFormats[contentType]; !ok {
+		return fmt.Errorf(
+			"uploading artist profile picture: %w",
+			apperrors.NewErrBadRequest("invalid content type"),
+		)
+	}
+
+	reader := bytes.NewReader(file)
+	config, _, err := image.DecodeConfig(reader)
+	if err != nil {
+		return fmt.Errorf(
+			"uploading artist profile picture: %w",
+			apperrors.NewErrBadRequest("invalid content type"),
+		)
+	}
+	reader.Reset(file)
+
+	if config.Height != 1024 || config.Width != 1024 {
+		return fmt.Errorf(
+			"uploading artist profile picture: %w",
+			apperrors.NewErrBadRequest("image resolution must be 1024x1024"),
+		)
+	}
+
+	objectKey := uuid.New()
+	storageOpts := storage.PutOptions{
+		ContentType:    contentType,
+		SendContentMD5: false,
+	}
+
+	if err := s.storage.PutObject(
+		ctx,
+		constants.ProfilePicBucket,
+		objectKey.String(),
+		reader,
+		reader.Size(),
+		storageOpts,
+	); err != nil {
+		return fmt.Errorf("uploading artist profile picture: %w", err)
+	}
+
+	if err := s.repo.UpdateArtist(ctx, &UpdateArtistReq{
+		ID:             artistID,
+		ArtistImageKey: &objectKey,
+	}); err != nil {
+		return fmt.Errorf("uploading artist profile picture: %w", err)
+	}
+
 	return nil
 }
