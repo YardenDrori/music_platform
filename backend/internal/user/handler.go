@@ -25,7 +25,7 @@ func (h *handler) GetMe(w http.ResponseWriter, r *http.Request) error {
 
 	user, err := h.service.FindByUUIDInternal(r.Context(), id)
 	if err != nil {
-		e := apperrors.NewErrInternal("").
+		e := apperrors.NewErrInternal().
 			WithInternal("failed to get account details despite valid token").
 			WithCause(err)
 		return fmt.Errorf("getting own account details: %w", e)

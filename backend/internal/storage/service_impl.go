@@ -59,7 +59,7 @@ func (s *service) PutObject(
 	if err != nil {
 		return fmt.Errorf(
 			"sending put request to minio storage: %w",
-			apperrors.NewErrInternal("").WithCause(err),
+			apperrors.NewErrInternal().WithCause(err),
 		)
 	}
 	return nil

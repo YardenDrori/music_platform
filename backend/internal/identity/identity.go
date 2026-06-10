@@ -17,7 +17,7 @@ func WithUserID(ctx context.Context, id uuid.UUID) context.Context {
 func UserIDFromContext(ctx context.Context) (uuid.UUID, error) {
 	id, ok := ctx.Value(contextUserID{}).(uuid.UUID)
 	if !ok {
-		return uuid.Nil, apperrors.NewErrInternal("").
+		return uuid.Nil, apperrors.NewErrInternal().
 			WithInternal("identity missing or formatted incorrectly in context")
 	}
 	return id, nil

@@ -22,10 +22,14 @@ func NewPostgresRepository(db *pgxpool.Pool) *postgresRepository {
 	return &postgresRepository{db: db}
 }
 
-func (r *postgresRepository) NewArtist(ctx context.Context, artist Artist, uploaderID uuid.UUID) error {
+func (r *postgresRepository) NewArtist(
+	ctx context.Context,
+	artist Artist,
+	uploaderID uuid.UUID,
+) error {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal("").WithCause(err))
+		return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 	defer tx.Rollback(ctx)
 
@@ -54,26 +58,36 @@ func (r *postgresRepository) NewArtist(ctx context.Context, artist Artist, uploa
 				return apperrors.NewErrConflict("conflict")
 			}
 		}
-		return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal("").WithCause(err))
+		return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 
 	_, err = tx.Exec(ctx, `INSERT INTO artist_contributors (artist_id, user_id) VALUES ($1, $2)`,
 		artist.ID, uploaderID,
 	)
 	if err != nil {
-		return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal("").WithCause(err))
+		return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal("").WithCause(err))
+		return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 	return nil
 }
 
-func (r *postgresRepository) fetchContributors(ctx context.Context, artistID uuid.UUID) ([]uuid.UUID, error) {
-	rows, err := r.db.Query(ctx, `SELECT user_id FROM artist_contributors WHERE artist_id = $1`, artistID)
+func (r *postgresRepository) fetchContributors(
+	ctx context.Context,
+	artistID uuid.UUID,
+) ([]uuid.UUID, error) {
+	rows, err := r.db.Query(
+		ctx,
+		`SELECT user_id FROM artist_contributors WHERE artist_id = $1`,
+		artistID,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("fetching contributors: %w", apperrors.NewErrInternal("").WithCause(err))
+		return nil, fmt.Errorf(
+			"fetching contributors: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
 	}
 	defer rows.Close()
 
@@ -81,12 +95,18 @@ func (r *postgresRepository) fetchContributors(ctx context.Context, artistID uui
 	for rows.Next() {
 		var id uuid.UUID
 		if err := rows.Scan(&id); err != nil {
-			return nil, fmt.Errorf("fetching contributors: %w", apperrors.NewErrInternal("").WithCause(err))
+			return nil, fmt.Errorf(
+				"fetching contributors: %w",
+				apperrors.NewErrInternal().WithCause(err),
+			)
 		}
 		ids = append(ids, id)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("fetching contributors: %w", apperrors.NewErrInternal("").WithCause(err))
+		return nil, fmt.Errorf(
+			"fetching contributors: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
 	}
 	return ids, nil
 }
@@ -100,7 +120,10 @@ func (r *postgresRepository) GetArtistsByName(ctx context.Context, name string) 
 		name,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("finding artists by name: %w", apperrors.NewErrInternal("").WithCause(err))
+		return nil, fmt.Errorf(
+			"finding artists by name: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
 	}
 	defer rows.Close()
 
@@ -124,7 +147,10 @@ func (r *postgresRepository) GetArtistsByName(ctx context.Context, name string) 
 			&newArtist.DeletedAt,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("finding artists by name: %w", apperrors.NewErrInternal("").WithCause(err))
+			return nil, fmt.Errorf(
+				"finding artists by name: %w",
+				apperrors.NewErrInternal().WithCause(err),
+			)
 		}
 		newArtist.ContributorIDs, err = r.fetchContributors(ctx, newArtist.ID)
 		if err != nil {
@@ -133,7 +159,10 @@ func (r *postgresRepository) GetArtistsByName(ctx context.Context, name string) 
 		artists = append(artists, newArtist)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("finding artists by name: %w", apperrors.NewErrInternal("").WithCause(err))
+		return nil, fmt.Errorf(
+			"finding artists by name: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
 	}
 	if !foundOne {
 		return nil, apperrors.NewErrNotFound("artist not found")
@@ -157,7 +186,10 @@ func (r *postgresRepository) GetArtistByID(ctx context.Context, id uuid.UUID) (*
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, apperrors.NewErrNotFound("artist not found")
 		}
-		return nil, fmt.Errorf("finding artist by id: %w", apperrors.NewErrInternal("").WithCause(err))
+		return nil, fmt.Errorf(
+			"finding artist by id: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
 	}
 
 	artist.ContributorIDs, err = r.fetchContributors(ctx, artist.ID)
@@ -228,7 +260,7 @@ func (r *postgresRepository) UpdateArtist(ctx context.Context, req *UpdateArtist
 
 	tag, err := r.db.Exec(ctx, query, args...)
 	if err != nil {
-		return fmt.Errorf("updating artist: %w", apperrors.NewErrInternal("").WithCause(err))
+		return fmt.Errorf("updating artist: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 	if tag.RowsAffected() == 0 {
 		return apperrors.NewErrNotFound("artist not found")
@@ -239,7 +271,7 @@ func (r *postgresRepository) UpdateArtist(ctx context.Context, req *UpdateArtist
 func (r *postgresRepository) DeleteArtist(ctx context.Context, id uuid.UUID) error {
 	data, err := r.db.Exec(ctx, `DELETE FROM artists WHERE id = $1`, id)
 	if err != nil {
-		return fmt.Errorf("deleting artist: %w", apperrors.NewErrInternal("").WithCause(err))
+		return fmt.Errorf("deleting artist: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 	if data.RowsAffected() == 0 {
 		return apperrors.NewErrNotFound("artist not found")
@@ -247,7 +279,11 @@ func (r *postgresRepository) DeleteArtist(ctx context.Context, id uuid.UUID) err
 	return nil
 }
 
-func (r *postgresRepository) AddContributor(ctx context.Context, artistID uuid.UUID, userID uuid.UUID) error {
+func (r *postgresRepository) AddContributor(
+	ctx context.Context,
+	artistID uuid.UUID,
+	userID uuid.UUID,
+) error {
 	_, err := r.db.Exec(ctx, `INSERT INTO artist_contributors (artist_id, user_id) VALUES ($1, $2)`,
 		artistID, userID,
 	)
@@ -257,17 +293,24 @@ func (r *postgresRepository) AddContributor(ctx context.Context, artistID uuid.U
 				return apperrors.NewErrConflict("user is already a contributor")
 			}
 		}
-		return fmt.Errorf("adding contributor: %w", apperrors.NewErrInternal("").WithCause(err))
+		return fmt.Errorf("adding contributor: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 	return nil
 }
 
-func (r *postgresRepository) RemoveContributor(ctx context.Context, artistID uuid.UUID, userID uuid.UUID) error {
-	tag, err := r.db.Exec(ctx, `DELETE FROM artist_contributors WHERE artist_id = $1 AND user_id = $2`,
-		artistID, userID,
+func (r *postgresRepository) RemoveContributor(
+	ctx context.Context,
+	artistID uuid.UUID,
+	userID uuid.UUID,
+) error {
+	tag, err := r.db.Exec(
+		ctx,
+		`DELETE FROM artist_contributors WHERE artist_id = $1 AND user_id = $2`,
+		artistID,
+		userID,
 	)
 	if err != nil {
-		return fmt.Errorf("removing contributor: %w", apperrors.NewErrInternal("").WithCause(err))
+		return fmt.Errorf("removing contributor: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 	if tag.RowsAffected() == 0 {
 		return apperrors.NewErrNotFound("contributor not found")
