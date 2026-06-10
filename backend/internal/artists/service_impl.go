@@ -7,7 +7,6 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
-	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -101,12 +100,11 @@ func (s *service) NewArtist(ctx context.Context, req NewArtistReq) error {
 	}
 
 	artist := req.ToArtist()
-	artist.UploaderID = requesterID
 	if err := validateArtist(&artist); err != nil {
 		return fmt.Errorf("creating artist: %w", err)
 	}
 
-	err = s.repo.NewArtist(ctx, artist)
+	err = s.repo.NewArtist(ctx, artist, requesterID)
 	if err != nil {
 		return fmt.Errorf("creating artist: %w", err)
 	}
