@@ -11,7 +11,6 @@ CREATE TABLE songs (
   title          TEXT NOT NULL,
   main_artist_id UUID NOT NULL REFERENCES artists(id) ON DELETE RESTRICT,
   album_id       UUID REFERENCES albums(id) ON DELETE SET NULL,
-  uploader_id    UUID REFERENCES users(id) ON DELETE SET NULL,
   is_public      BOOL NOT NULL DEFAULT FALSE,
   deleted_at     TIMESTAMPTZ,
   runtime_ms     INT NOT NULL,
@@ -28,4 +27,10 @@ CREATE TABLE song_artists (
   song_id   UUID NOT NULL REFERENCES songs(id) ON DELETE CASCADE,
   artist_id UUID NOT NULL REFERENCES artists(id) ON DELETE RESTRICT,
   PRIMARY KEY (song_id, artist_id)
+);
+
+CREATE TABLE song_contributors (
+  song_id UUID REFERENCES songs(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  PRIMARY KEY (song_id, user_id)
 );

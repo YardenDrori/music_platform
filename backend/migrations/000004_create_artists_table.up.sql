@@ -12,5 +12,10 @@ CREATE TABLE artists(
   added_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMPTZ,
-  uploader_id UUID REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE artist_contributors (
+  artist_id UUID REFERENCES artists(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  PRIMARY KEY (artist_id, user_id)
 );

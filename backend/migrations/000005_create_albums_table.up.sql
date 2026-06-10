@@ -17,3 +17,9 @@ CREATE TABLE album_artists (
   artist_id UUID NOT NULL REFERENCES artists(id) ON DELETE RESTRICT,
   PRIMARY KEY (album_id, artist_id)
 );
+
+CREATE TABLE album_contributors (
+  album_id UUID REFERENCES albums(id) ON DELETE CASCADE,
+  user_id  UUID REFERENCES users(id) ON DELETE CASCADE,
+  PRIMARY KEY (album_id, user_id)
+);
