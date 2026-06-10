@@ -23,6 +23,8 @@ type UpdateArtistReq struct {
 	LinkToYouTube    *string    `json:"linkToYouTube"`
 	LinkToSpotify    *string    `json:"linkToSpotify"`
 	LinkToAppleMusic *string    `json:"linkToAppleMusic"`
+	ArtistImageKey   *uuid.UUID `json:"-"`
+	ArtistBannerKey  *uuid.UUID `json:"-"`
 	BirthDate        *time.Time `json:"birthDate"`
 	BirthPlace       *string    `json:"birthPlace"`
 	DeletedAt        *time.Time `json:"-"`

@@ -156,6 +156,16 @@ func (r *postgresRepository) UpdateArtist(ctx context.Context, req *UpdateArtist
 		args = append(args, *req.LinkToAppleMusic)
 		i++
 	}
+	if req.ArtistImageKey != nil {
+		setClauses = append(setClauses, fmt.Sprintf("artist_image_key = $%d", i))
+		args = append(args, *req.ArtistImageKey)
+		i++
+	}
+	if req.ArtistBannerKey != nil {
+		setClauses = append(setClauses, fmt.Sprintf("artist_banner_key = $%d", i))
+		args = append(args, *req.ArtistBannerKey)
+		i++
+	}
 	if req.BirthDate != nil {
 		setClauses = append(setClauses, fmt.Sprintf("birth_date = $%d", i))
 		args = append(args, *req.BirthDate)
