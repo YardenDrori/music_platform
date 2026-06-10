@@ -17,7 +17,7 @@ type NewArtistReq struct {
 }
 
 type UpdateArtistReq struct {
-	ID               uuid.UUID
+	ID               uuid.UUID  `json:"-"`
 	Name             *string    `json:"name"`
 	Description      *string    `json:"description"`
 	LinkToYouTube    *string    `json:"linkToYouTube"`
