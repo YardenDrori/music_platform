@@ -92,6 +92,7 @@ func run() error {
 	storageAccessKey := os.Getenv("STORAGE_ACCESS_KEY")
 	storageSecretAccessKey := os.Getenv("STORAGE_SECRET_ACCESS_KEY")
 	storageIsSecureStr := os.Getenv("STORAGE_IS_SECURE")
+	storagePresignDurationStr := os.Getenv("STORAGE_PRESIGN_DURATION")
 	if storageEndpoint == "" {
 		return fmt.Errorf("storage endpoint not present in env")
 	}
@@ -103,6 +104,13 @@ func run() error {
 	}
 	if storageIsSecureStr == "" {
 		return fmt.Errorf("storage is secure not present in env")
+	}
+	if storagePresignDurationStr == "" {
+		return fmt.Errorf("storage presign duration not present in env")
+	}
+	storagePresignDuration, err := time.ParseDuration(storagePresignDurationStr)
+	if err != nil {
+		return fmt.Errorf("STORAGE_PRESIGN_DURATION value format invalid")
 	}
 	storageIsSecure, err := strconv.ParseBool(storageIsSecureStr)
 	if err != nil {
@@ -158,7 +166,7 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("failed to instantiate minioClient: %w", err)
 	}
-	storageService := storage.NewService(minioClient)
+	storageService := storage.NewService(minioClient, storagePresignDuration)
 
 	//==========ROUTER==========
 	mux := http.NewServeMux()
