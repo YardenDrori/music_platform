@@ -26,4 +26,7 @@ type Service interface {
 
 	SoftDeleteArtist(ctx context.Context, id uuid.UUID) error
 	HardDeleteArtist(ctx context.Context, id uuid.UUID) error
+
+	UploadArtistProfilePicture(ctx context.Context, file []byte, artistID uuid.UUID) error
+	UploadArtistBannerPicture(ctx context.Context, file []byte, artistID uuid.UUID) error
 }

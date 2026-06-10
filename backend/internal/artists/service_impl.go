@@ -217,3 +217,61 @@ func (s *service) UploadArtistProfilePicture(
 
 	return nil
 }
+
+func (s *service) UploadArtistBannerPicture(
+	ctx context.Context,
+	file []byte,
+	artistID uuid.UUID,
+) error {
+	contentType := http.DetectContentType(file)
+
+	if _, ok := allowedImageFormats[contentType]; !ok {
+		return fmt.Errorf(
+			"uploading artist banner: %w",
+			apperrors.NewErrBadRequest("invalid content type"),
+		)
+	}
+
+	reader := bytes.NewReader(file)
+	config, _, err := image.DecodeConfig(reader)
+	if err != nil {
+		return fmt.Errorf(
+			"uploading artist banner: %w",
+			apperrors.NewErrBadRequest("invalid content type"),
+		)
+	}
+	reader.Reset(file)
+
+	if config.Width < 1920 || config.Width > 3840 || config.Width != config.Height*3 {
+		return fmt.Errorf(
+			"uploading artist banner: %w",
+			apperrors.NewErrBadRequest("banner must be 3:1 aspect ratio with width between 1920 and 3840"),
+		)
+	}
+
+	objectKey := uuid.New()
+	storageOpts := storage.PutOptions{
+		ContentType:    contentType,
+		SendContentMD5: false,
+	}
+
+	if err := s.storage.PutObject(
+		ctx,
+		constants.BannerBucket,
+		objectKey.String(),
+		reader,
+		reader.Size(),
+		storageOpts,
+	); err != nil {
+		return fmt.Errorf("uploading artist banner: %w", err)
+	}
+
+	if err := s.repo.UpdateArtist(ctx, &UpdateArtistReq{
+		ID:              artistID,
+		ArtistBannerKey: &objectKey,
+	}); err != nil {
+		return fmt.Errorf("uploading artist banner: %w", err)
+	}
+
+	return nil
+}
