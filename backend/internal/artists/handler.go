@@ -2,9 +2,12 @@ package artists
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jxskiss/base62"
 
 	"github.com/YardenDrori/music-platform/internal/apperrors"
 	httputils "github.com/YardenDrori/music-platform/internal/http_utils"
@@ -63,12 +66,27 @@ func (h *handler) GetArtistByID(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *handler) UpdateArtistDetails(w http.ResponseWriter, r *http.Request) error {
+	base62ArtistID := r.PathValue("id")
+	if base62ArtistID == "" {
+		return apperrors.NewErrInternal().
+			WithInternal("user accessed AddProfilePicture handler without \"id\" in the url path")
+	}
+	artistIDBytes, err := base62.DecodeString(base62ArtistID)
+	if err != nil {
+		return apperrors.NewErrBadRequest("invalid artist id").WithCause(err)
+	}
+	artistID, err := uuid.ParseBytes(artistIDBytes)
+	if err != nil {
+		return apperrors.NewErrBadRequest("invalid artist id").WithCause(err)
+	}
+
 	req := &UpdateArtistReq{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		return apperrors.NewErrBadRequest("invalid request body")
 	}
+	req.ID = artistID
 
-	err := h.service.UpdateArtistDetails(r.Context(), req)
+	err = h.service.UpdateArtistDetails(r.Context(), req)
 	if err != nil {
 		return err
 	}
@@ -106,6 +124,70 @@ func (h *handler) HardDeleteArtist(w http.ResponseWriter, r *http.Request) error
 	}
 
 	err = h.service.HardDeleteArtist(r.Context(), id)
+	if err != nil {
+		return err
+	}
+	return httputils.WriteResponse(w, http.StatusOK, nil)
+}
+
+const maxPfpBytes = 5 * 1024 * 1024 // 5MB
+func (h *handler) AddProfilePicture(w http.ResponseWriter, r *http.Request) error {
+	base62ArtistID := r.PathValue("id")
+	if base62ArtistID == "" {
+		return apperrors.NewErrInternal().
+			WithInternal("user accessed AddProfilePicture handler without \"id\" in the url path")
+	}
+	artistIDBytes, err := base62.DecodeString(base62ArtistID)
+	if err != nil {
+		return apperrors.NewErrBadRequest("invalid artist id").WithCause(err)
+	}
+	artistID, err := uuid.ParseBytes(artistIDBytes)
+	if err != nil {
+		return apperrors.NewErrBadRequest("invalid artist id").WithCause(err)
+	}
+
+	// we read one byte more to be able to distuinguish from EOF to File cut off
+	pictureBytes, err := io.ReadAll(io.LimitReader(r.Body, maxPfpBytes+1))
+	if err != nil {
+		return apperrors.NewErrInternal().WithCause(err)
+	}
+	if len(pictureBytes) > maxPfpBytes {
+		return apperrors.NewErrBadRequest(fmt.Sprintf("file size over %d bytes", maxPfpBytes))
+	}
+
+	err = h.service.UploadArtistProfilePicture(r.Context(), pictureBytes, artistID)
+	if err != nil {
+		return err
+	}
+	return httputils.WriteResponse(w, http.StatusOK, nil)
+}
+
+const maxBannerBytes = 200 * 1024 * 1024 // 200MB
+func (h *handler) AddBanner(w http.ResponseWriter, r *http.Request) error {
+	base62ArtistID := r.PathValue("id")
+	if base62ArtistID == "" {
+		return apperrors.NewErrInternal().
+			WithInternal("user accessed AddBanner handler without \"id\" in the url path")
+	}
+	artistIDBytes, err := base62.DecodeString(base62ArtistID)
+	if err != nil {
+		return apperrors.NewErrBadRequest("invalid artist id").WithCause(err)
+	}
+	artistID, err := uuid.ParseBytes(artistIDBytes)
+	if err != nil {
+		return apperrors.NewErrBadRequest("invalid artist id").WithCause(err)
+	}
+
+	// we read one byte more to be able to distuinguish from EOF to File cut off
+	pictureBytes, err := io.ReadAll(io.LimitReader(r.Body, maxBannerBytes+1))
+	if err != nil {
+		return apperrors.NewErrInternal().WithCause(err)
+	}
+	if len(pictureBytes) > maxBannerBytes {
+		return apperrors.NewErrBadRequest(fmt.Sprintf("file size over %d bytes", maxBannerBytes))
+	}
+
+	err = h.service.UploadArtistBannerPicture(r.Context(), pictureBytes, artistID)
 	if err != nil {
 		return err
 	}
