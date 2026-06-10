@@ -69,7 +69,7 @@ func (h *handler) UpdateArtistDetails(w http.ResponseWriter, r *http.Request) er
 	base62ArtistID := r.PathValue("id")
 	if base62ArtistID == "" {
 		return apperrors.NewErrInternal().
-			WithInternal("user accessed AddProfilePicture handler without \"id\" in the url path")
+			WithInternal("user accessed UpdateArtistDetails handler without \"id\" in the url path")
 	}
 	artistIDBytes, err := base62.DecodeString(base62ArtistID)
 	if err != nil {
