@@ -153,12 +153,10 @@ func (e *ErrBadRequest) WithCause(err error) *ErrBadRequest {
 	return e
 }
 
-func NewErrInternal(
-	publicMessage string,
-) *ErrInternal {
+func NewErrInternal() *ErrInternal {
 	return &ErrInternal{
 		errBase{
-			PublicMessage: publicMessage,
+			PublicMessage: "internal server error",
 		},
 	}
 }
