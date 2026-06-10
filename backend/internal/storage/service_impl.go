@@ -3,12 +3,15 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
 
 	"github.com/minio/minio-go/v7"
+
+	"github.com/YardenDrori/music-platform/internal/apperrors"
 )
 
 type service struct {
@@ -38,6 +41,28 @@ func (s *service) PresignedUpload(
 		return nil, fmt.Errorf("generating a presigned url for a put request: %w", err)
 	}
 	return uploadUrl, nil
+}
+
+func (s *service) PutObject(
+	ctx context.Context,
+	bucketName string,
+	objectKey string,
+	reader io.Reader,
+	size int64,
+	opts PutOptions,
+) error {
+	minioOpts := minio.PutObjectOptions{
+		ContentType:    opts.ContentType,
+		SendContentMd5: opts.SendContentMD5,
+	}
+	_, err := s.s3Core.Client.PutObject(ctx, bucketName, objectKey, reader, size, minioOpts)
+	if err != nil {
+		return fmt.Errorf(
+			"sending put request to minio storage: %w",
+			apperrors.NewErrInternal("").WithCause(err),
+		)
+	}
+	return nil
 }
 
 func (s *service) InitiateMultipartUpload(
