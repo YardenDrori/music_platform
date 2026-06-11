@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -34,20 +35,21 @@ func (r *postgresRepository) NewArtist(
 	defer tx.Rollback(ctx)
 
 	_, err = tx.Exec(ctx, `
-		INSERT INTO artists (id, name, description, artist_image_key,
+		INSERT INTO artists (id, name,  description, is_band, artist_image_key,
 		artist_banner_key, link_to_youtube, link_to_spotify, link_to_apple_music,
-		birth_date, birth_place, added_at, updated_at, deleted_at)
-		VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+		origin_date, origin_place, added_at, updated_at, deleted_at)
+		VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
 		artist.ID,
 		artist.Name,
 		artist.Description,
+		artist.IsBand,
 		artist.ArtistImageKey,
 		artist.ArtistBannerKey,
 		artist.LinkToYouTube,
 		artist.LinkToSpotify,
 		artist.LinkToAppleMusic,
-		artist.BirthDate,
-		artist.BirthPlace,
+		artist.OriginDate,
+		artist.OriginPlace,
 		artist.AddedAt,
 		artist.UpdatedAt,
 		artist.DeletedAt,
@@ -61,11 +63,26 @@ func (r *postgresRepository) NewArtist(
 		return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 
-	_, err = tx.Exec(ctx, `INSERT INTO artist_contributors (artist_id, user_id) VALUES ($1, $2)`,
-		artist.ID, uploaderID,
+	_, err = tx.Exec(
+		ctx,
+		`INSERT INTO artist_contributors (artist_id, user_id, contributed_at) VALUES ($1, $2, $3)`,
+		artist.ID,
+		uploaderID,
+		time.Now().UTC(),
 	)
 	if err != nil {
 		return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal().WithCause(err))
+	}
+
+	for _, alias := range artist.Aliases {
+		_, err = tx.Exec(ctx,
+			`INSERT INTO artist_aliases (artist_id, alias) VALUES($1, $2)`,
+			artist.ID,
+			alias,
+		)
+		if err != nil {
+			return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal().WithCause(err))
+		}
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -74,129 +91,171 @@ func (r *postgresRepository) NewArtist(
 	return nil
 }
 
-func (r *postgresRepository) fetchContributors(
+func (r *postgresRepository) GetArtistsByNameOrAlias(
 	ctx context.Context,
-	artistID uuid.UUID,
-) ([]uuid.UUID, error) {
-	rows, err := r.db.Query(
-		ctx,
-		`SELECT user_id FROM artist_contributors WHERE artist_id = $1`,
-		artistID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"fetching contributors: %w",
-			apperrors.NewErrInternal().WithCause(err),
-		)
-	}
-	defer rows.Close()
-
-	var ids []uuid.UUID
-	for rows.Next() {
-		var id uuid.UUID
-		if err := rows.Scan(&id); err != nil {
-			return nil, fmt.Errorf(
-				"fetching contributors: %w",
-				apperrors.NewErrInternal().WithCause(err),
-			)
-		}
-		ids = append(ids, id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf(
-			"fetching contributors: %w",
-			apperrors.NewErrInternal().WithCause(err),
-		)
-	}
-	return ids, nil
-}
-
-func (r *postgresRepository) GetArtistsByName(ctx context.Context, name string) ([]*Artist, error) {
-	var artists []*Artist
+	name string,
+) ([]ArtistEntity, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT id, name, description, artist_image_key, artist_banner_key,
-		link_to_youtube, link_to_spotify, link_to_apple_music, birth_date,
-		birth_place, added_at, updated_at, deleted_at FROM artists WHERE name = $1`,
+	SELECT a.id, a.name, a.description, a.is_band, a.artist_image_key, a.artist_banner_key,
+	a.link_to_youtube, a.link_to_spotify, a.link_to_apple_music, a.origin_date, a.origin_place,
+	a.added_at, a.updated_at, 
+	ARRAY(SELECT alias FROM artist_aliases WHERE artist_id = a.id ORDER BY alias),
+	ARRAY(SELECT user_id FROM artist_contributors ac WHERE ac.artist_id = a.id ORDER BY ac.user_id),
+	ARRAY(SELECT username FROM users u JOIN artist_contributors ac ON ac.user_id = u.id WHERE a.id = ac.artist_id ORDER BY ac.user_id),
+	ARRAY(SELECT profile_pic_key FROM users u JOIN artist_contributors ac ON ac.user_id = u.id WHERE a.id = ac.artist_id ORDER BY ac.user_id),
+	ARRAY(SELECT contributed_at FROM artist_contributors ac WHERE ac.artist_id = a.id ORDER BY ac.user_id)
+	FROM artists a WHERE a.deleted_at IS NULL
+	AND (a.name ILIKE '%' || $1 || '%' OR EXISTS (
+		SELECT 1 FROM artist_aliases aa WHERE aa.artist_id = a.id AND aa.alias ILIKE '%' || $1 || '%'
+	))`,
 		name,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"finding artists by name: %w",
+			"fetching artists via name or alias: %w",
 			apperrors.NewErrInternal().WithCause(err),
 		)
 	}
 	defer rows.Close()
 
-	foundOne := false
+	artists := []ArtistEntity{}
 	for rows.Next() {
-		foundOne = true
-		newArtist := &Artist{}
-		err = rows.Scan(
-			&newArtist.ID,
-			&newArtist.Name,
-			&newArtist.Description,
-			&newArtist.ArtistImageKey,
-			&newArtist.ArtistBannerKey,
-			&newArtist.LinkToYouTube,
-			&newArtist.LinkToSpotify,
-			&newArtist.LinkToAppleMusic,
-			&newArtist.BirthDate,
-			&newArtist.BirthPlace,
-			&newArtist.AddedAt,
-			&newArtist.UpdatedAt,
-			&newArtist.DeletedAt,
+		artist := ArtistEntity{}
+		aliases := []string{}
+
+		userIDs := []uuid.UUID{}
+		userNames := []string{}
+		userProfilePics := []*uuid.UUID{}
+		contributionDates := []time.Time{}
+		err := rows.Scan(
+			&artist.ID,
+			&artist.Name,
+			&artist.Description,
+			&artist.IsBand,
+			&artist.ArtistImageKey,
+			&artist.ArtistBannerKey,
+			&artist.LinkToYouTube,
+			&artist.LinkToSpotify,
+			&artist.LinkToAppleMusic,
+			&artist.OriginDate,
+			&artist.OriginPlace,
+			&artist.AddedAt,
+			&artist.UpdatedAt,
+			&aliases,
+			&userIDs,
+			&userNames,
+			&userProfilePics,
+			&contributionDates,
 		)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"finding artists by name: %w",
+				"fetching artists via name or alias: %w",
 				apperrors.NewErrInternal().WithCause(err),
 			)
 		}
-		newArtist.ContributorIDs, err = r.fetchContributors(ctx, newArtist.ID)
-		if err != nil {
-			return nil, fmt.Errorf("finding artists by name: %w", err)
+
+		contributions := []ContributionEntity{}
+		//all arrays are the same length
+		for i := range userIDs {
+			contribution := ContributionEntity{
+				ContributorID:         userIDs[i],
+				ContributorName:       userNames[i],
+				ContributorProfileKey: userProfilePics[i],
+				ContributionDate:      contributionDates[i],
+			}
+			contributions = append(contributions, contribution)
 		}
-		artists = append(artists, newArtist)
+
+		artist.Aliases = aliases
+		artist.ContributionsEntity = contributions
+		artists = append(artists, artist)
 	}
-	if err := rows.Err(); err != nil {
+
+	if rows.Err() != nil {
 		return nil, fmt.Errorf(
-			"finding artists by name: %w",
-			apperrors.NewErrInternal().WithCause(err),
+			"fetching artists via name or alias: %w",
+			apperrors.NewErrInternal().WithCause(rows.Err()),
 		)
 	}
-	if !foundOne {
-		return nil, apperrors.NewErrNotFound("artist not found")
+	if len(artists) == 0 {
+		return nil, fmt.Errorf(
+			"fetching artists via name or alias: %w",
+			apperrors.NewErrNotFound("artist not found"),
+		)
 	}
 	return artists, nil
 }
 
-func (r *postgresRepository) GetArtistByID(ctx context.Context, id uuid.UUID) (*Artist, error) {
-	artist := &Artist{}
-	err := r.db.QueryRow(ctx, `
-		SELECT id, name, description, artist_image_key, artist_banner_key,
-		link_to_youtube, link_to_spotify, link_to_apple_music, birth_date,
-		birth_place, added_at, updated_at, deleted_at FROM artists WHERE id = $1`,
-		id,
-	).Scan(&artist.ID, &artist.Name, &artist.Description, &artist.ArtistImageKey,
-		&artist.ArtistBannerKey, &artist.LinkToYouTube, &artist.LinkToSpotify,
-		&artist.LinkToAppleMusic, &artist.BirthDate, &artist.BirthPlace,
-		&artist.AddedAt, &artist.UpdatedAt, &artist.DeletedAt)
+func (r *postgresRepository) GetArtistByID(
+	ctx context.Context,
+	id uuid.UUID,
+) (*ArtistEntity, error) {
+	artist := ArtistEntity{}
+	aliases := []string{}
 
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, apperrors.NewErrNotFound("artist not found")
-		}
+	userIDs := []uuid.UUID{}
+	userNames := []string{}
+	userProfilePics := []*uuid.UUID{}
+	contributionDates := []time.Time{}
+	err := r.db.QueryRow(ctx, `
+	SELECT a.id, a.name, a.description, a.is_band, a.artist_image_key, a.artist_banner_key,
+	a.link_to_youtube, a.link_to_spotify, a.link_to_apple_music, a.origin_date, a.origin_place,
+	a.added_at, a.updated_at, 
+	ARRAY(SELECT alias FROM artist_aliases WHERE artist_id = a.id ORDER BY alias),
+	ARRAY(SELECT user_id FROM artist_contributors ac WHERE ac.artist_id = a.id ORDER BY ac.user_id),
+	ARRAY(SELECT username FROM users u JOIN artist_contributors ac ON ac.user_id = u.id WHERE a.id = ac.artist_id ORDER BY ac.user_id),
+	ARRAY(SELECT profile_pic_key FROM users u JOIN artist_contributors ac ON ac.user_id = u.id WHERE a.id = ac.artist_id ORDER BY ac.user_id),
+	ARRAY(SELECT contributed_at FROM artist_contributors ac WHERE ac.artist_id = a.id ORDER BY ac.user_id)
+	FROM artists a WHERE a.deleted_at IS NULL AND a.id = $1`,
+		id,
+	).Scan(
+		&artist.ID,
+		&artist.Name,
+		&artist.Description,
+		&artist.IsBand,
+		&artist.ArtistImageKey,
+		&artist.ArtistBannerKey,
+		&artist.LinkToYouTube,
+		&artist.LinkToSpotify,
+		&artist.LinkToAppleMusic,
+		&artist.OriginDate,
+		&artist.OriginPlace,
+		&artist.AddedAt,
+		&artist.UpdatedAt,
+		&aliases,
+		&userIDs,
+		&userNames,
+		&userProfilePics,
+		&contributionDates,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf(
-			"finding artist by id: %w",
+			"fetching artists via id: %w",
+			apperrors.NewErrNotFound("artist not found"),
+		)
+	}
+	if err != nil {
+		return nil, fmt.Errorf(
+			"fetching artists via id: %w",
 			apperrors.NewErrInternal().WithCause(err),
 		)
 	}
 
-	artist.ContributorIDs, err = r.fetchContributors(ctx, artist.ID)
-	if err != nil {
-		return nil, fmt.Errorf("finding artist by id: %w", err)
+	contributions := []ContributionEntity{}
+	//all arrays are the same length
+	for i := range userIDs {
+		contribution := ContributionEntity{
+			ContributorID:         userIDs[i],
+			ContributorName:       userNames[i],
+			ContributorProfileKey: userProfilePics[i],
+			ContributionDate:      contributionDates[i],
+		}
+		contributions = append(contributions, contribution)
 	}
-	return artist, nil
+	artist.Aliases = aliases
+	artist.ContributionsEntity = contributions
+
+	return &artist, nil
 }
 
 func (r *postgresRepository) UpdateArtist(ctx context.Context, req *UpdateArtistReq) error {
@@ -212,6 +271,11 @@ func (r *postgresRepository) UpdateArtist(ctx context.Context, req *UpdateArtist
 	if req.Description != nil {
 		setClauses = append(setClauses, fmt.Sprintf("description = $%d", i))
 		args = append(args, *req.Description)
+		i++
+	}
+	if req.IsBand != nil {
+		setClauses = append(setClauses, fmt.Sprintf("is_band = $%d", i))
+		args = append(args, *req.IsBand)
 		i++
 	}
 	if req.LinkToYouTube != nil {
@@ -239,14 +303,14 @@ func (r *postgresRepository) UpdateArtist(ctx context.Context, req *UpdateArtist
 		args = append(args, *req.ArtistBannerKey)
 		i++
 	}
-	if req.BirthDate != nil {
-		setClauses = append(setClauses, fmt.Sprintf("birth_date = $%d", i))
-		args = append(args, *req.BirthDate)
+	if req.OriginDate != nil {
+		setClauses = append(setClauses, fmt.Sprintf("origin_date = $%d", i))
+		args = append(args, *req.OriginDate)
 		i++
 	}
-	if req.BirthPlace != nil {
-		setClauses = append(setClauses, fmt.Sprintf("birth_place = $%d", i))
-		args = append(args, *req.BirthPlace)
+	if req.OriginPlace != nil {
+		setClauses = append(setClauses, fmt.Sprintf("origin_place = $%d", i))
+		args = append(args, *req.OriginPlace)
 		i++
 	}
 	if req.DeletedAt != nil {
@@ -314,6 +378,45 @@ func (r *postgresRepository) RemoveContributor(
 	}
 	if tag.RowsAffected() == 0 {
 		return apperrors.NewErrNotFound("contributor not found")
+	}
+	return nil
+}
+
+func (r *postgresRepository) AddAlias(
+	ctx context.Context,
+	artistID uuid.UUID,
+	alias string,
+) error {
+	_, err := r.db.Exec(ctx, `INSERT INTO artist_aliases (artist_id, alias) VALUES($1, $2)`,
+		artistID, alias,
+	)
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" {
+				return apperrors.NewErrConflict("artist already has this alias")
+			}
+		}
+		return fmt.Errorf("adding alias: %w", apperrors.NewErrInternal().WithCause(err))
+	}
+	return nil
+}
+
+func (r *postgresRepository) RemoveAlias(
+	ctx context.Context,
+	artistID uuid.UUID,
+	alias string,
+) error {
+	tag, err := r.db.Exec(
+		ctx,
+		`DELETE FROM artist_aliases WHERE artist_id = $1 AND alias = $2`,
+		artistID,
+		alias,
+	)
+	if err != nil {
+		return fmt.Errorf("removing alias: %w", apperrors.NewErrInternal().WithCause(err))
+	}
+	if tag.RowsAffected() == 0 {
+		return apperrors.NewErrNotFound("alias not found for this artist")
 	}
 	return nil
 }
