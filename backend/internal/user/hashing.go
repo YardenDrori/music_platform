@@ -88,7 +88,7 @@ func (h *argon2idPasswordHasher) verifyPassword(
 	if errTime != nil {
 		return false, fmt.Errorf("converting hash setting time from strings: %w", errTime)
 	}
-	threads, errThreads := strconv.ParseUint(settings[2][2:], 10, 32)
+	threads, errThreads := strconv.ParseUint(settings[2][2:], 10, 8)
 	if errThreads != nil {
 		return false, fmt.Errorf("converting hash setting threads from strings: %w", errThreads)
 	}
