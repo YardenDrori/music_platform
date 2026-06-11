@@ -8,25 +8,28 @@ import (
 
 type NewArtistReq struct {
 	Name             string     `json:"name"`
+	Aliases          []string   `json:"aliases"`
 	Description      *string    `json:"description"`
+	IsBand           bool       `json:"isBand"`
 	LinkToYouTube    *string    `json:"linkToYouTube"`
 	LinkToSpotify    *string    `json:"linkToSpotify"`
 	LinkToAppleMusic *string    `json:"linkToAppleMusic"`
-	BirthDate        *time.Time `json:"birthDate"`
-	BirthPlace       *string    `json:"birthPlace"`
+	OriginDate       *time.Time `json:"originDate"`
+	OriginPlace      *string    `json:"originPlace"`
 }
 
 type UpdateArtistReq struct {
 	ID               uuid.UUID  `json:"-"`
 	Name             *string    `json:"name"`
 	Description      *string    `json:"description"`
+	IsBand           *bool      `json:"isBand"`
+	ArtistImageKey   *uuid.UUID `json:"-"`
+	ArtistBannerKey  *uuid.UUID `json:"-"`
 	LinkToYouTube    *string    `json:"linkToYouTube"`
 	LinkToSpotify    *string    `json:"linkToSpotify"`
 	LinkToAppleMusic *string    `json:"linkToAppleMusic"`
-	ArtistImageKey   *uuid.UUID `json:"-"`
-	ArtistBannerKey  *uuid.UUID `json:"-"`
-	BirthDate        *time.Time `json:"birthDate"`
-	BirthPlace       *string    `json:"birthPlace"`
+	OriginDate       *time.Time `json:"birthDate"`
+	OriginPlace      *string    `json:"birthPlace"`
 	DeletedAt        *time.Time `json:"-"`
 }
 
@@ -40,8 +43,8 @@ func (a *NewArtistReq) ToArtist() Artist {
 		LinkToYouTube:    a.LinkToYouTube,
 		LinkToSpotify:    a.LinkToSpotify,
 		LinkToAppleMusic: a.LinkToAppleMusic,
-		BirthDate:        a.BirthDate,
-		BirthPlace:       a.BirthPlace,
+		OriginDate:       a.OriginDate,
+		OriginPlace:      a.OriginPlace,
 		AddedAt:          time.Now(),
 		UpdatedAt:        time.Now(),
 		DeletedAt:        nil,
