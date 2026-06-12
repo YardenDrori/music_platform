@@ -9,22 +9,17 @@ import (
 type Repository interface {
 	NewArtist(ctx context.Context, artist Artist, uploaderID uuid.UUID) error
 
-	GetArtistsByName(ctx context.Context, name string) ([]Artist, error)
+	GetArtistsByNameOrAlias(ctx context.Context, name string) ([]Artist, error)
 	GetArtistByID(ctx context.Context, id uuid.UUID) (*Artist, error)
 
 	UpdateArtist(ctx context.Context, req *UpdateArtistReq) error
 	DeleteArtist(ctx context.Context, id uuid.UUID) error
-
-	AddContributor(ctx context.Context, artistID uuid.UUID, userID uuid.UUID) error
-	RemoveContributor(ctx context.Context, artistID uuid.UUID, userID uuid.UUID) error
-	AddAlias(ctx context.Context, artistID uuid.UUID, alias string) error
-	RemoveAlias(ctx context.Context, artistID uuid.UUID, alias string) error
 }
 
 type Service interface {
 	NewArtist(ctx context.Context, req NewArtistReq) error
 
-	GetArtistsByName(ctx context.Context, name string) ([]*Artist, error)
+	GetArtistsByNameOrAlias(ctx context.Context, name string) ([]Artist, error)
 	GetArtistByID(ctx context.Context, id uuid.UUID) (*Artist, error)
 
 	UpdateArtistDetails(ctx context.Context, req *UpdateArtistReq) error

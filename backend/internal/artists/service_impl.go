@@ -33,11 +33,11 @@ func validateArtist(artist *Artist) error {
 	if artist.Name == "" {
 		return apperrors.NewErrBadRequest("artist name cannot be empty")
 	}
-	if artist.BirthPlace != nil && utf8.RuneCountInString(*artist.BirthPlace) != 2 {
-		return apperrors.NewErrBadRequest("birth place must be 2 characters")
+	if artist.OriginPlace != nil && utf8.RuneCountInString(*artist.OriginPlace) != 2 {
+		return apperrors.NewErrBadRequest("origin place must be 2 characters")
 	}
-	if artist.BirthDate != nil && artist.BirthDate.After(time.Now()) {
-		return apperrors.NewErrBadRequest("birth date cannot be in the future")
+	if artist.OriginDate != nil && artist.OriginDate.After(time.Now()) {
+		return apperrors.NewErrBadRequest("origin date cannot be in the future")
 	}
 
 	if artist.LinkToYouTube != nil {
@@ -66,11 +66,11 @@ func validateUpdateReq(req *UpdateArtistReq) error {
 	if req.Name != nil && *req.Name == "" {
 		return apperrors.NewErrBadRequest("artist name cannot be empty")
 	}
-	if req.BirthPlace != nil && utf8.RuneCountInString(*req.BirthPlace) != 2 {
-		return apperrors.NewErrBadRequest("birth place must be 2 characters")
+	if req.OriginPlace != nil && utf8.RuneCountInString(*req.OriginPlace) != 2 {
+		return apperrors.NewErrBadRequest("origin place must be 2 characters")
 	}
-	if req.BirthDate != nil && req.BirthDate.After(time.Now()) {
-		return apperrors.NewErrBadRequest("birth date cannot be in the future")
+	if req.OriginDate != nil && req.OriginDate.After(time.Now()) {
+		return apperrors.NewErrBadRequest("origin date cannot be in the future")
 	}
 	if req.LinkToYouTube != nil {
 		u, err := url.Parse(*req.LinkToYouTube)
@@ -111,11 +111,40 @@ func (s *service) NewArtist(ctx context.Context, req NewArtistReq) error {
 	return nil
 }
 
-func (s *service) GetArtistsByName(ctx context.Context, name string) ([]*Artist, error) {
-	artists, err := s.repo.GetArtistsByName(ctx, name)
+func (s *service) processArtistEntity(artist *Artist) {
+	if artist.ArtistImageUrl != nil {
+		artist.ArtistImageUrl = s.storage.BuildPublicGetUrl(
+			constants.ProfilePicBucket,
+			*artist.ArtistImageUrl,
+		)
+	}
+	if artist.ArtistBannerUrl != nil {
+		artist.ArtistBannerUrl = s.storage.BuildPublicGetUrl(
+			constants.BannerBucket,
+			*artist.ArtistBannerUrl,
+		)
+	}
+	for j := range artist.Contributions {
+		contribution := &artist.Contributions[j]
+		if contribution.ContributorProfileUrl != nil {
+			contribution.ContributorProfileUrl = s.storage.BuildPublicGetUrl(
+				constants.ProfilePicBucket,
+				*contribution.ContributorProfileUrl,
+			)
+		}
+	}
+}
+
+func (s *service) GetArtistsByNameOrAlias(ctx context.Context, name string) ([]Artist, error) {
+	artists, err := s.repo.GetArtistsByNameOrAlias(ctx, name)
 	if err != nil {
 		return nil, fmt.Errorf("getting artists by name: %w", err)
 	}
+
+	for i := range artists {
+		s.processArtistEntity(&artists[i])
+	}
+
 	return artists, nil
 }
 
@@ -124,13 +153,26 @@ func (s *service) GetArtistByID(ctx context.Context, id uuid.UUID) (*Artist, err
 	if err != nil {
 		return nil, fmt.Errorf("getting artist by id: %w", err)
 	}
+
+	s.processArtistEntity(artist)
+
 	return artist, nil
 }
 
 func (s *service) UpdateArtistDetails(ctx context.Context, req *UpdateArtistReq) error {
+	requesterID, err := identity.UserIDFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("updating artist details: %w", err)
+	}
+
 	if err := validateUpdateReq(req); err != nil {
 		return fmt.Errorf("updating artist: %w", err)
 	}
+
+	req.ContributorsToAdd = append(req.ContributorsToAdd, Contribution{
+		ContributorID: requesterID,
+	})
+
 	if err := s.repo.UpdateArtist(ctx, req); err != nil {
 		return fmt.Errorf("updating artist: %w", err)
 	}
@@ -243,7 +285,9 @@ func (s *service) UploadArtistBannerPicture(
 	if config.Width < 1920 || config.Width > 3840 || config.Width != config.Height*3 {
 		return fmt.Errorf(
 			"uploading artist banner: %w",
-			apperrors.NewErrBadRequest("banner must be 3:1 aspect ratio with width between 1920 and 3840"),
+			apperrors.NewErrBadRequest(
+				"banner must be 3:1 aspect ratio with width between 1920 and 3840",
+			),
 		)
 	}
 
