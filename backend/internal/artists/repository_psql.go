@@ -44,8 +44,8 @@ func (r *postgresRepository) NewArtist(
 		artist.Name,
 		artist.Description,
 		artist.IsBand,
-		artist.ArtistImageKey,
-		artist.ArtistBannerKey,
+		artist.ArtistImageUrl,
+		artist.ArtistBannerUrl,
 		artist.LinkToYouTube,
 		artist.LinkToSpotify,
 		artist.LinkToAppleMusic,
@@ -95,7 +95,7 @@ func (r *postgresRepository) NewArtist(
 func (r *postgresRepository) GetArtistsByNameOrAlias(
 	ctx context.Context,
 	name string,
-) ([]ArtistEntity, error) {
+) ([]Artist, error) {
 	rows, err := r.db.Query(ctx, `
 	SELECT a.id, a.name, a.description, a.is_band, a.artist_image_key, a.artist_banner_key,
 	a.link_to_youtube, a.link_to_spotify, a.link_to_apple_music, a.origin_date, a.origin_place,
@@ -119,22 +119,22 @@ func (r *postgresRepository) GetArtistsByNameOrAlias(
 	}
 	defer rows.Close()
 
-	artists := []ArtistEntity{}
+	artists := []Artist{}
 	for rows.Next() {
-		artist := ArtistEntity{}
+		artist := Artist{}
 		aliases := []string{}
 
 		userIDs := []uuid.UUID{}
 		userNames := []string{}
-		userProfilePics := []*uuid.UUID{}
+		userProfilePics := []*string{}
 		contributionDates := []time.Time{}
 		err := rows.Scan(
 			&artist.ID,
 			&artist.Name,
 			&artist.Description,
 			&artist.IsBand,
-			&artist.ArtistImageKey,
-			&artist.ArtistBannerKey,
+			&artist.ArtistImageUrl,
+			&artist.ArtistBannerUrl,
 			&artist.LinkToYouTube,
 			&artist.LinkToSpotify,
 			&artist.LinkToAppleMusic,
@@ -155,20 +155,20 @@ func (r *postgresRepository) GetArtistsByNameOrAlias(
 			)
 		}
 
-		contributions := []ContributionEntity{}
+		contributions := []Contribution{}
 		//all arrays are the same length
 		for i := range userIDs {
-			contribution := ContributionEntity{
+			contribution := Contribution{
 				ContributorID:         userIDs[i],
 				ContributorName:       userNames[i],
-				ContributorProfileKey: userProfilePics[i],
+				ContributorProfileUrl: userProfilePics[i],
 				ContributionDate:      contributionDates[i],
 			}
 			contributions = append(contributions, contribution)
 		}
 
 		artist.Aliases = aliases
-		artist.ContributionsEntity = contributions
+		artist.Contributions = contributions
 		artists = append(artists, artist)
 	}
 
@@ -190,13 +190,13 @@ func (r *postgresRepository) GetArtistsByNameOrAlias(
 func (r *postgresRepository) GetArtistByID(
 	ctx context.Context,
 	id uuid.UUID,
-) (*ArtistEntity, error) {
-	artist := ArtistEntity{}
+) (*Artist, error) {
+	artist := Artist{}
 	aliases := []string{}
 
 	userIDs := []uuid.UUID{}
 	userNames := []string{}
-	userProfilePics := []*uuid.UUID{}
+	userProfilePics := []*string{}
 	contributionDates := []time.Time{}
 	err := r.db.QueryRow(ctx, `
 	SELECT a.id, a.name, a.description, a.is_band, a.artist_image_key, a.artist_banner_key,
@@ -214,8 +214,8 @@ func (r *postgresRepository) GetArtistByID(
 		&artist.Name,
 		&artist.Description,
 		&artist.IsBand,
-		&artist.ArtistImageKey,
-		&artist.ArtistBannerKey,
+		&artist.ArtistImageUrl,
+		&artist.ArtistBannerUrl,
 		&artist.LinkToYouTube,
 		&artist.LinkToSpotify,
 		&artist.LinkToAppleMusic,
@@ -242,19 +242,19 @@ func (r *postgresRepository) GetArtistByID(
 		)
 	}
 
-	contributions := []ContributionEntity{}
+	contributions := []Contribution{}
 	//all arrays are the same length
 	for i := range userIDs {
-		contribution := ContributionEntity{
+		contribution := Contribution{
 			ContributorID:         userIDs[i],
 			ContributorName:       userNames[i],
-			ContributorProfileKey: userProfilePics[i],
+			ContributorProfileUrl: userProfilePics[i],
 			ContributionDate:      contributionDates[i],
 		}
 		contributions = append(contributions, contribution)
 	}
 	artist.Aliases = aliases
-	artist.ContributionsEntity = contributions
+	artist.Contributions = contributions
 
 	return &artist, nil
 }

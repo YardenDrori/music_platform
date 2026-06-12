@@ -9,7 +9,7 @@ import (
 type Repository interface {
 	NewArtist(ctx context.Context, artist Artist, uploaderID uuid.UUID) error
 
-	GetArtistsByName(ctx context.Context, name string) ([]*Artist, error)
+	GetArtistsByName(ctx context.Context, name string) ([]Artist, error)
 	GetArtistByID(ctx context.Context, id uuid.UUID) (*Artist, error)
 
 	UpdateArtist(ctx context.Context, req *UpdateArtistReq) error
@@ -17,6 +17,8 @@ type Repository interface {
 
 	AddContributor(ctx context.Context, artistID uuid.UUID, userID uuid.UUID) error
 	RemoveContributor(ctx context.Context, artistID uuid.UUID, userID uuid.UUID) error
+	AddAlias(ctx context.Context, artistID uuid.UUID, alias string) error
+	RemoveAlias(ctx context.Context, artistID uuid.UUID, alias string) error
 }
 
 type Service interface {
