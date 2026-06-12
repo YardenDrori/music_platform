@@ -319,16 +319,128 @@ func (r *postgresRepository) UpdateArtist(ctx context.Context, req *UpdateArtist
 		args = append(args, *req.DeletedAt)
 		i++
 	}
-
 	args = append(args, req.ID)
-	query := fmt.Sprintf("UPDATE artists SET %s WHERE id = $%d", strings.Join(setClauses, ", "), i)
 
-	tag, err := r.db.Exec(ctx, query, args...)
+	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("updating artist: %w", apperrors.NewErrInternal().WithCause(err))
+		return fmt.Errorf(
+			"updating artist information: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
+	}
+	//nolint
+	defer tx.Rollback(ctx)
+
+	tag, err := tx.Exec(ctx, fmt.Sprintf("UPDATE artists SET %v WHERE id = $%d",
+		strings.Join(setClauses, ", "),
+		i),
+		args...,
+	)
+
+	if err != nil {
+		return fmt.Errorf(
+			"updating artist information: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
 	}
 	if tag.RowsAffected() == 0 {
-		return apperrors.NewErrNotFound("artist not found")
+		return fmt.Errorf(
+			"updating artist information: %w",
+			apperrors.NewErrNotFound("artist not found"),
+		)
+	}
+
+	if req.AliasesToAdd != nil {
+		for _, alias := range req.AliasesToAdd {
+			_, err := tx.Exec(ctx, `INSERT INTO artist_aliases (artist_id, alias) VALUES($1, $2)`,
+				req.ID,
+				alias,
+			)
+			if err != nil {
+				if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+					if pgErr.Code == "23505" {
+						return apperrors.NewErrConflict("artist already has alias")
+					}
+				}
+				return fmt.Errorf(
+					"updating artist information: %w",
+					apperrors.NewErrInternal().WithCause(err),
+				)
+			}
+		}
+	}
+	if req.AliasesToRemove != nil {
+		for _, alias := range req.AliasesToRemove {
+			tag, err := tx.Exec(
+				ctx,
+				`DELETE FROM artist_aliases WHERE artist_id = $1 AND alias = $2`,
+				req.ID,
+				alias,
+			)
+			if err != nil {
+				return fmt.Errorf(
+					"updating artist information: %w",
+					apperrors.NewErrInternal().WithCause(err),
+				)
+			}
+			if tag.RowsAffected() == 0 {
+				return fmt.Errorf(
+					"updating artist information: %w",
+					apperrors.NewErrNotFound("alias not found"),
+				)
+			}
+		}
+	}
+	if req.ContributorsToAdd != nil {
+		for _, contr := range req.ContributorsToAdd {
+			_, err := tx.Exec(
+				ctx,
+				`INSERT INTO artist_contributors (artist_id, user_id) VALUES ($1, $2)`,
+				req.ID,
+				contr,
+			)
+			if err != nil {
+				if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+					if pgErr.Code == "23505" {
+						return apperrors.NewErrConflict("user already a contributor")
+					}
+				}
+				return fmt.Errorf(
+					"updating artist information: %w",
+					apperrors.NewErrInternal().WithCause(err),
+				)
+			}
+
+		}
+	}
+	if req.ContributorsToRemove != nil {
+		for _, contr := range req.ContributorsToRemove {
+			tag, err := tx.Exec(
+				ctx,
+				`DELETE FROM artist_contributors WHERE artist_id = $1 AND user_id = $2`,
+				req.ID,
+				contr,
+			)
+			if err != nil {
+				return fmt.Errorf(
+					"updating artist information: %w",
+					apperrors.NewErrInternal().WithCause(err),
+				)
+			}
+			if tag.RowsAffected() == 0 {
+				return fmt.Errorf(
+					"updating artist information: %w",
+					apperrors.NewErrNotFound("contributor not found"),
+				)
+			}
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf(
+			"updating artist information: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
 	}
 	return nil
 }
@@ -340,84 +452,6 @@ func (r *postgresRepository) DeleteArtist(ctx context.Context, id uuid.UUID) err
 	}
 	if data.RowsAffected() == 0 {
 		return apperrors.NewErrNotFound("artist not found")
-	}
-	return nil
-}
-
-func (r *postgresRepository) AddContributor(
-	ctx context.Context,
-	artistID uuid.UUID,
-	userID uuid.UUID,
-) error {
-	_, err := r.db.Exec(ctx, `INSERT INTO artist_contributors (artist_id, user_id) VALUES ($1, $2)`,
-		artistID, userID,
-	)
-	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" {
-				return apperrors.NewErrConflict("user is already a contributor")
-			}
-		}
-		return fmt.Errorf("adding contributor: %w", apperrors.NewErrInternal().WithCause(err))
-	}
-	return nil
-}
-
-func (r *postgresRepository) RemoveContributor(
-	ctx context.Context,
-	artistID uuid.UUID,
-	userID uuid.UUID,
-) error {
-	tag, err := r.db.Exec(
-		ctx,
-		`DELETE FROM artist_contributors WHERE artist_id = $1 AND user_id = $2`,
-		artistID,
-		userID,
-	)
-	if err != nil {
-		return fmt.Errorf("removing contributor: %w", apperrors.NewErrInternal().WithCause(err))
-	}
-	if tag.RowsAffected() == 0 {
-		return apperrors.NewErrNotFound("contributor not found")
-	}
-	return nil
-}
-
-func (r *postgresRepository) AddAlias(
-	ctx context.Context,
-	artistID uuid.UUID,
-	alias string,
-) error {
-	_, err := r.db.Exec(ctx, `INSERT INTO artist_aliases (artist_id, alias) VALUES($1, $2)`,
-		artistID, alias,
-	)
-	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" {
-				return apperrors.NewErrConflict("artist already has this alias")
-			}
-		}
-		return fmt.Errorf("adding alias: %w", apperrors.NewErrInternal().WithCause(err))
-	}
-	return nil
-}
-
-func (r *postgresRepository) RemoveAlias(
-	ctx context.Context,
-	artistID uuid.UUID,
-	alias string,
-) error {
-	tag, err := r.db.Exec(
-		ctx,
-		`DELETE FROM artist_aliases WHERE artist_id = $1 AND alias = $2`,
-		artistID,
-		alias,
-	)
-	if err != nil {
-		return fmt.Errorf("removing alias: %w", apperrors.NewErrInternal().WithCause(err))
-	}
-	if tag.RowsAffected() == 0 {
-		return apperrors.NewErrNotFound("alias not found for this artist")
 	}
 	return nil
 }
