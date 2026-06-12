@@ -395,16 +395,11 @@ func (r *postgresRepository) UpdateArtist(ctx context.Context, req *UpdateArtist
 		for _, contr := range req.ContributorsToAdd {
 			_, err := tx.Exec(
 				ctx,
-				`INSERT INTO artist_contributors (artist_id, user_id) VALUES ($1, $2)`,
+				`INSERT INTO artist_contributors (artist_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
 				req.ID,
 				contr,
 			)
 			if err != nil {
-				if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-					if pgErr.Code == "23505" {
-						return apperrors.NewErrConflict("user already a contributor")
-					}
-				}
 				return fmt.Errorf(
 					"updating artist information: %w",
 					apperrors.NewErrInternal().WithCause(err),
