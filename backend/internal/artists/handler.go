@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/jxskiss/base62"
 
 	"github.com/YardenDrori/music-platform/internal/apperrors"
 	httputils "github.com/YardenDrori/music-platform/internal/http_utils"
@@ -34,13 +33,13 @@ func (h *handler) NewArtist(w http.ResponseWriter, r *http.Request) error {
 	return httputils.WriteResponse(w, http.StatusCreated, nil)
 }
 
-func (h *handler) GetArtistsByName(w http.ResponseWriter, r *http.Request) error {
+func (h *handler) GetArtistsByNameOrAlias(w http.ResponseWriter, r *http.Request) error {
 	queries := r.URL.Query()
 	name := queries.Get("name")
 	if name == "" {
 		return apperrors.NewErrBadRequest("query missing name field")
 	}
-	artists, err := h.service.GetArtistsByName(r.Context(), name)
+	artists, err := h.service.GetArtistsByNameOrAlias(r.Context(), name)
 	if err != nil {
 		return err
 	}
@@ -66,16 +65,12 @@ func (h *handler) GetArtistByID(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (h *handler) UpdateArtistDetails(w http.ResponseWriter, r *http.Request) error {
-	base62ArtistID := r.PathValue("id")
-	if base62ArtistID == "" {
+	artistIDRaw := r.PathValue("id")
+	if artistIDRaw == "" {
 		return apperrors.NewErrInternal().
 			WithInternal("user accessed UpdateArtistDetails handler without \"id\" in the url path")
 	}
-	artistIDBytes, err := base62.DecodeString(base62ArtistID)
-	if err != nil {
-		return apperrors.NewErrBadRequest("invalid artist id").WithCause(err)
-	}
-	artistID, err := uuid.ParseBytes(artistIDBytes)
+	artistID, err := uuid.Parse(artistIDRaw)
 	if err != nil {
 		return apperrors.NewErrBadRequest("invalid artist id").WithCause(err)
 	}
@@ -132,16 +127,12 @@ func (h *handler) HardDeleteArtist(w http.ResponseWriter, r *http.Request) error
 
 const maxPfpBytes = 5 * 1024 * 1024 // 5MB
 func (h *handler) AddProfilePicture(w http.ResponseWriter, r *http.Request) error {
-	base62ArtistID := r.PathValue("id")
-	if base62ArtistID == "" {
+	artistIDRaw := r.PathValue("id")
+	if artistIDRaw == "" {
 		return apperrors.NewErrInternal().
 			WithInternal("user accessed AddProfilePicture handler without \"id\" in the url path")
 	}
-	artistIDBytes, err := base62.DecodeString(base62ArtistID)
-	if err != nil {
-		return apperrors.NewErrBadRequest("invalid artist id").WithCause(err)
-	}
-	artistID, err := uuid.ParseBytes(artistIDBytes)
+	artistID, err := uuid.Parse(artistIDRaw)
 	if err != nil {
 		return apperrors.NewErrBadRequest("invalid artist id").WithCause(err)
 	}
@@ -164,16 +155,12 @@ func (h *handler) AddProfilePicture(w http.ResponseWriter, r *http.Request) erro
 
 const maxBannerBytes = 200 * 1024 * 1024 // 200MB
 func (h *handler) AddBanner(w http.ResponseWriter, r *http.Request) error {
-	base62ArtistID := r.PathValue("id")
-	if base62ArtistID == "" {
+	artistIDRaw := r.PathValue("id")
+	if artistIDRaw == "" {
 		return apperrors.NewErrInternal().
 			WithInternal("user accessed AddBanner handler without \"id\" in the url path")
 	}
-	artistIDBytes, err := base62.DecodeString(base62ArtistID)
-	if err != nil {
-		return apperrors.NewErrBadRequest("invalid artist id").WithCause(err)
-	}
-	artistID, err := uuid.ParseBytes(artistIDBytes)
+	artistID, err := uuid.Parse(artistIDRaw)
 	if err != nil {
 		return apperrors.NewErrBadRequest("invalid artist id").WithCause(err)
 	}
