@@ -32,6 +32,7 @@ func (r *postgresRepository) NewArtist(
 	if err != nil {
 		return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal().WithCause(err))
 	}
+	//nolint
 	defer tx.Rollback(ctx)
 
 	_, err = tx.Exec(ctx, `

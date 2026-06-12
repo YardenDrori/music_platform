@@ -48,6 +48,6 @@ func (a *NewArtistReq) ToArtist() Artist {
 		AddedAt:          time.Now(),
 		UpdatedAt:        time.Now(),
 		DeletedAt:        nil,
-		ContributorIDs:   []uuid.UUID{},
+		Contributions:    []Contribution{},
 	}
 }
