@@ -400,12 +400,17 @@ func (r *postgresRepository) UpdateArtist(ctx context.Context, req *UpdateArtist
 				contr,
 			)
 			if err != nil {
+				if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23503" {
+					return fmt.Errorf(
+						"updating artist information: %w",
+						apperrors.NewErrBadRequest("contributor does not exist"),
+					)
+				}
 				return fmt.Errorf(
 					"updating artist information: %w",
 					apperrors.NewErrInternal().WithCause(err),
 				)
 			}
-
 		}
 	}
 	if req.ContributorsToRemove != nil {
