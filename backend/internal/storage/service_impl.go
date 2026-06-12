@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -17,13 +18,26 @@ import (
 type service struct {
 	s3Core               *minio.Core
 	preginedURLsDuration time.Duration
+	publicUrlPrefix      *string
 }
 
-func NewService(client *minio.Client, presignedURLsDuration time.Duration) Service {
+func NewService(
+	client *minio.Client,
+	presignedURLsDuration time.Duration,
+	publicUrlPrefix *string,
+) Service {
 	return &service{
 		s3Core:               &minio.Core{Client: client},
 		preginedURLsDuration: presignedURLsDuration,
+		publicUrlPrefix:      publicUrlPrefix,
 	}
+}
+
+func (s *service) BuildPublicGetUrl(bucketName string, objectKey string) *string {
+	result := strings.Join([]string{
+		*s.publicUrlPrefix, bucketName, objectKey,
+	}, "/")
+	return &result
 }
 
 func (s *service) PresignedUpload(

@@ -69,4 +69,6 @@ type Service interface {
 		size int64,
 		opts PutOptions,
 	) error
+
+	BuildPublicGetUrl(bucketName string, objectKey string) *string
 }

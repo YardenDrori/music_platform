@@ -166,7 +166,14 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("failed to instantiate minioClient: %w", err)
 	}
-	storageService := storage.NewService(minioClient, storagePresignDuration)
+	var publicGetUrlPrefix string
+	if storageIsSecure {
+		publicGetUrlPrefix = fmt.Sprintf("https://%s", storageEndpoint)
+	} else {
+		publicGetUrlPrefix = fmt.Sprintf("http://%s", storageEndpoint)
+	}
+	storageService := storage.NewService(minioClient, storagePresignDuration, &publicGetUrlPrefix)
+	_ = storageService
 
 	//==========ROUTER==========
 	mux := http.NewServeMux()
