@@ -19,18 +19,22 @@ type NewArtistReq struct {
 }
 
 type UpdateArtistReq struct {
-	ID               uuid.UUID  `json:"-"`
-	Name             *string    `json:"name"`
-	Description      *string    `json:"description"`
-	IsBand           *bool      `json:"isBand"`
-	ArtistImageKey   *uuid.UUID `json:"-"`
-	ArtistBannerKey  *uuid.UUID `json:"-"`
-	LinkToYouTube    *string    `json:"linkToYouTube"`
-	LinkToSpotify    *string    `json:"linkToSpotify"`
-	LinkToAppleMusic *string    `json:"linkToAppleMusic"`
-	OriginDate       *time.Time `json:"birthDate"`
-	OriginPlace      *string    `json:"birthPlace"`
-	DeletedAt        *time.Time `json:"-"`
+	ID                   uuid.UUID      `json:"-"`
+	Name                 *string        `json:"name"`
+	AliasesToAdd         []string       `json:"aliasesToAdd"`
+	AliasesToRemove      []string       `json:"aliasesToRemove"`
+	Description          *string        `json:"description"`
+	IsBand               *bool          `json:"isBand"`
+	ArtistImageKey       *uuid.UUID     `json:"-"`
+	ArtistBannerKey      *uuid.UUID     `json:"-"`
+	LinkToYouTube        *string        `json:"linkToYouTube"`
+	LinkToSpotify        *string        `json:"linkToSpotify"`
+	LinkToAppleMusic     *string        `json:"linkToAppleMusic"`
+	OriginDate           *time.Time     `json:"birthDate"`
+	OriginPlace          *string        `json:"birthPlace"`
+	DeletedAt            *time.Time     `json:"-"`
+	ContributorsToAdd    []Contribution `json:"-"`
+	ContributorsToRemove []Contribution `json:"-"`
 }
 
 func (a *NewArtistReq) ToArtist() Artist {
@@ -38,8 +42,8 @@ func (a *NewArtistReq) ToArtist() Artist {
 		ID:               uuid.New(),
 		Name:             a.Name,
 		Description:      a.Description,
-		ArtistImageKey:   nil,
-		ArtistBannerKey:  nil,
+		ArtistImageUrl:   nil,
+		ArtistBannerUrl:  nil,
 		LinkToYouTube:    a.LinkToYouTube,
 		LinkToSpotify:    a.LinkToSpotify,
 		LinkToAppleMusic: a.LinkToAppleMusic,
