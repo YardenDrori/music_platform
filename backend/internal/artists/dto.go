@@ -19,29 +19,31 @@ type NewArtistReq struct {
 }
 
 type UpdateArtistReq struct {
-	ID                   uuid.UUID      `json:"-"`
-	Name                 *string        `json:"name"`
-	AliasesToAdd         []string       `json:"aliasesToAdd"`
-	AliasesToRemove      []string       `json:"aliasesToRemove"`
-	Description          *string        `json:"description"`
-	IsBand               *bool          `json:"isBand"`
-	ArtistImageKey       *uuid.UUID     `json:"-"`
-	ArtistBannerKey      *uuid.UUID     `json:"-"`
-	LinkToYouTube        *string        `json:"linkToYouTube"`
-	LinkToSpotify        *string        `json:"linkToSpotify"`
-	LinkToAppleMusic     *string        `json:"linkToAppleMusic"`
-	OriginDate           *time.Time     `json:"birthDate"`
-	OriginPlace          *string        `json:"birthPlace"`
-	DeletedAt            *time.Time     `json:"-"`
-	ContributorsToAdd    []Contribution `json:"-"`
-	ContributorsToRemove []Contribution `json:"-"`
+	ID                   uuid.UUID   `json:"-"`
+	Name                 *string     `json:"name"`
+	AliasesToAdd         []string    `json:"aliasesToAdd"`
+	AliasesToRemove      []string    `json:"aliasesToRemove"`
+	Description          *string     `json:"description"`
+	IsBand               *bool       `json:"isBand"`
+	ArtistImageKey       *uuid.UUID  `json:"-"`
+	ArtistBannerKey      *uuid.UUID  `json:"-"`
+	LinkToYouTube        *string     `json:"linkToYouTube"`
+	LinkToSpotify        *string     `json:"linkToSpotify"`
+	LinkToAppleMusic     *string     `json:"linkToAppleMusic"`
+	OriginDate           *time.Time  `json:"birthDate"`
+	OriginPlace          *string     `json:"birthPlace"`
+	DeletedAt            *time.Time  `json:"-"`
+	ContributorsToAdd    []uuid.UUID `json:"-"`
+	ContributorsToRemove []uuid.UUID `json:"-"`
 }
 
 func (a *NewArtistReq) ToArtist() Artist {
 	return Artist{
 		ID:               uuid.New(),
 		Name:             a.Name,
+		Aliases:          a.Aliases,
 		Description:      a.Description,
+		IsBand:           a.IsBand,
 		ArtistImageUrl:   nil,
 		ArtistBannerUrl:  nil,
 		LinkToYouTube:    a.LinkToYouTube,

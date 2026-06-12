@@ -169,9 +169,7 @@ func (s *service) UpdateArtistDetails(ctx context.Context, req *UpdateArtistReq)
 		return fmt.Errorf("updating artist: %w", err)
 	}
 
-	req.ContributorsToAdd = append(req.ContributorsToAdd, Contribution{
-		ContributorID: requesterID,
-	})
+	req.ContributorsToAdd = append(req.ContributorsToAdd, requesterID)
 
 	if err := s.repo.UpdateArtist(ctx, req); err != nil {
 		return fmt.Errorf("updating artist: %w", err)
