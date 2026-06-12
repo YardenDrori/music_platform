@@ -9,7 +9,7 @@ import (
 )
 
 type Album struct {
-	Id           uuid.UUID
+	ID           uuid.UUID
 	Name         string
 	Description  *string
 	MainArtistID uuid.UUID
@@ -19,7 +19,7 @@ type Album struct {
 	UpdatedAt    time.Time
 	DeletedAt    *time.Time
 	PremieredAt  *time.Time
-	Artists      []artists.Artist
+	Artists      []uuid.UUID
 	Contributors []Contributor
 }
 
