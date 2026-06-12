@@ -30,6 +30,6 @@ CREATE TABLE artist_contributors (
 );
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE INDEX idx_artists_name ON artists(name);
-CREATE INDEX idx_artists_fuzzy ON artists USING GIN(name gin_trgm_ops)
-CREATE INDEX idx_artists_aliases ON artist_aliases USING GIN(alias gin_trgm_ops)
+CREATE INDEX idx_artists_name ON artists(name) WHERE deleted_at IS NULL;
+CREATE INDEX idx_artists_fuzzy ON artists USING GIN(name gin_trgm_ops) WHERE deleted_at IS NULL;
+CREATE INDEX idx_artists_aliases ON artist_aliases USING GIN(alias gin_trgm_ops) WHERE deleted_at IS NULL;
