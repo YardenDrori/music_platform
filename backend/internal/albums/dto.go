@@ -21,7 +21,7 @@ func (r *NewAlbumRequest) ToAlbum() *Album {
 		Name:         r.Name,
 		Description:  r.Description,
 		MainArtistID: r.MainArtistID,
-		AlbumArtKey:  nil,
+		AlbumArtUrl:  nil,
 		HasAllTracks: r.HasAllTracks,
 		AddedAt:      time.Now().UTC(),
 		UpdatedAt:    time.Now().UTC(),

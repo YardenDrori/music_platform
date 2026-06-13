@@ -7,18 +7,18 @@ import (
 )
 
 type Album struct {
-	ID           uuid.UUID
-	Name         string
-	Description  *string
-	MainArtistID uuid.UUID
-	AlbumArtKey  *uuid.UUID
-	HasAllTracks bool
-	AddedAt      time.Time
-	UpdatedAt    time.Time
-	DeletedAt    *time.Time
-	PremieredAt  *time.Time
-	Artists      []uuid.UUID
-	Contributors []Contributor
+	ID           uuid.UUID      `json:"id"`
+	Name         string         `json:"name"`
+	Description  *string        `json:"description"`
+	MainArtistID uuid.UUID      `json:"mainArtistId"`
+	AlbumArtUrl  *string        `json:"albumArtUrl"`
+	HasAllTracks bool           `json:"hasAllTracks"`
+	AddedAt      time.Time      `json:"addedAt"`
+	UpdatedAt    time.Time      `json:"updatedAt"`
+	DeletedAt    *time.Time     `json:"-"`
+	PremieredAt  *time.Time     `json:"premieredAt"`
+	Artists      []uuid.UUID    `json:"artists"`
+	Contributors []Contributor  `json:"contributors"`
 }
 
 type Contributor struct {
