@@ -186,6 +186,18 @@ func (s *service) UploadAlbumPicture(ctx context.Context, file []byte, albumID u
 		ID:          albumID,
 		AlbumArtKey: &objectKey,
 	}); err != nil {
+		if errObj := s.storage.DeleteObject(
+			context.Background(),
+			constants.AlbumArtBucket,
+			objectKey.String(),
+			storage.DeleteOptions{},
+		); errObj != nil {
+			return fmt.Errorf(
+				"uploading album art: %w, attempting to remove object via sage: %w",
+				err,
+				errObj,
+			)
+		}
 		return fmt.Errorf("uploading album art: %w", err)
 	}
 

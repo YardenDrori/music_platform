@@ -245,11 +245,22 @@ func (s *service) UploadArtistProfilePicture(
 	); err != nil {
 		return fmt.Errorf("uploading artist profile picture: %w", err)
 	}
-
 	if err := s.repo.UpdateArtist(ctx, &UpdateArtistReq{
 		ID:             artistID,
 		ArtistImageKey: &objectKey,
 	}); err != nil {
+		if errObj := s.storage.DeleteObject(
+			context.Background(),
+			constants.ProfilePicBucket,
+			objectKey.String(),
+			storage.DeleteOptions{},
+		); errObj != nil {
+			return fmt.Errorf(
+				"uploading artist profile picture: %w, attempting to remove object via sage: %w",
+				err,
+				errObj,
+			)
+		}
 		return fmt.Errorf("uploading artist profile picture: %w", err)
 	}
 
@@ -310,6 +321,18 @@ func (s *service) UploadArtistBannerPicture(
 		ID:              artistID,
 		ArtistBannerKey: &objectKey,
 	}); err != nil {
+		if errObj := s.storage.DeleteObject(
+			context.Background(),
+			constants.BannerBucket,
+			objectKey.String(),
+			storage.DeleteOptions{},
+		); errObj != nil {
+			return fmt.Errorf(
+				"uploading artist banner: %w, attempting to remove object via sage: %w",
+				err,
+				errObj,
+			)
+		}
 		return fmt.Errorf("uploading artist banner: %w", err)
 	}
 
