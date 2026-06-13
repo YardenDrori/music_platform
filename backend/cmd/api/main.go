@@ -43,9 +43,8 @@ func routeWithMiddleware(
 		mux:        mux,
 		middleware: nil,
 	}
-	for _, v := range middleware {
-		router.middleware = append(router.middleware, v)
-	}
+	router.middleware = append(router.middleware, middleware...)
+
 	return &router
 }
 
