@@ -4,8 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
-	"github.com/YardenDrori/music-platform/internal/artists"
 )
 
 type Album struct {
