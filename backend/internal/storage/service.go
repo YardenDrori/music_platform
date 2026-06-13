@@ -13,6 +13,12 @@ type PutOptions struct {
 	SendContentMD5 bool
 }
 
+type DeleteOptions struct {
+	ForceDelete      bool
+	GovernanceBypass bool
+	VersionID        string
+}
+
 type Service interface {
 	//errors:
 	//fmt
@@ -71,4 +77,11 @@ type Service interface {
 	) error
 
 	BuildPublicGetUrl(bucketName string, objectKey string) *string
+
+	DeleteObject(
+		ctx context.Context,
+		bucketName string,
+		objectKey string,
+		opts DeleteOptions,
+	) error
 }

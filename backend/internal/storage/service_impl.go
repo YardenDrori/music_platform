@@ -176,3 +176,23 @@ func (s *service) AbortMultipartUpload(
 	}
 	return nil
 }
+
+func (s *service) DeleteObject(
+	ctx context.Context,
+	bucketName string,
+	objectKey string,
+	opts DeleteOptions,
+) error {
+	minioOpts := minio.RemoveObjectOptions{
+		ForceDelete:      opts.ForceDelete,
+		GovernanceBypass: opts.GovernanceBypass,
+		VersionID:        opts.VersionID,
+	}
+	if err := s.s3Core.RemoveObject(ctx, bucketName, objectKey, minioOpts); err != nil {
+		return fmt.Errorf(
+			"removing object from storage: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
+	}
+	return nil
+}
