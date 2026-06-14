@@ -15,7 +15,7 @@ CREATE TYPE song_type AS ENUM (
 CREATE TABLE songs (
   id             UUID PRIMARY KEY,
   title          TEXT NOT NULL,
-  main_artist_id UUID NOT NULL REFERENCES artists(id) ON DELETE RESTRICT,
+  main_artist_id UUID REFERENCES artists(id) ON DELETE SET NULL,
   album_id       UUID REFERENCES albums(id) ON DELETE SET NULL,
   track_number   INT,
   premiered_at   TIMESTAMPTZ,

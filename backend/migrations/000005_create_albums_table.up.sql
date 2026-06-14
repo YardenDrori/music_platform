@@ -2,7 +2,7 @@ CREATE TABLE albums (
   id             UUID PRIMARY KEY,
   name           TEXT NOT NULL,
   description    TEXT,
-  main_artist_id UUID NOT NULL REFERENCES artists(id) ON DELETE RESTRICT,
+  main_artist_id UUID REFERENCES artists(id) ON DELETE SET NULL,
   album_art_key  UUID,
   has_all_tracks BOOL NOT NULL DEFAULT FALSE,
   added_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
