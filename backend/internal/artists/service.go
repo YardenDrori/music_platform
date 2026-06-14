@@ -12,8 +12,8 @@ type Repository interface {
 	GetArtistsByNameOrAlias(ctx context.Context, name string) ([]Artist, error)
 	GetArtistByID(ctx context.Context, id uuid.UUID) (*Artist, error)
 
-	UpdateArtist(ctx context.Context, req *UpdateArtistReq) error
-	DeleteArtist(ctx context.Context, id uuid.UUID) error
+	UpdateArtist(ctx context.Context, req *UpdateArtistReq) (*Artist, error)
+	DeleteArtist(ctx context.Context, id uuid.UUID) (*Artist, error)
 }
 
 type Service interface {
