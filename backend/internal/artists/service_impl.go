@@ -7,6 +7,7 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
@@ -159,7 +160,14 @@ func (s *service) GetArtistByID(ctx context.Context, id uuid.UUID) (*Artist, err
 	return artist, nil
 }
 
+// Updates most artist details
+// to update the profile picture or banner image use the dedicated methods for these
 func (s *service) UpdateArtistDetails(ctx context.Context, req *UpdateArtistReq) error {
+	if req.ArtistImageKey != nil || req.ArtistBannerKey != nil {
+		return apperrors.NewErrInternal().
+			WithInternal("image keys must be updated via the dedicated upload endpoints")
+	}
+
 	requesterID, err := identity.UserIDFromContext(ctx)
 	if err != nil {
 		return fmt.Errorf("updating artist details: %w", err)
@@ -171,15 +179,17 @@ func (s *service) UpdateArtistDetails(ctx context.Context, req *UpdateArtistReq)
 
 	req.ContributorsToAdd = append(req.ContributorsToAdd, requesterID)
 
-	if err := s.repo.UpdateArtist(ctx, req); err != nil {
+	_, err = s.repo.UpdateArtist(ctx, req)
+	if err != nil {
 		return fmt.Errorf("updating artist: %w", err)
 	}
+
 	return nil
 }
 
 func (s *service) SoftDeleteArtist(ctx context.Context, id uuid.UUID) error {
 	now := time.Now().UTC()
-	err := s.repo.UpdateArtist(ctx, &UpdateArtistReq{ID: id, DeletedAt: &now})
+	_, err := s.repo.UpdateArtist(ctx, &UpdateArtistReq{ID: id, DeletedAt: &now})
 	if err != nil {
 		return fmt.Errorf("soft deleting artist: %w", err)
 	}
@@ -187,9 +197,42 @@ func (s *service) SoftDeleteArtist(ctx context.Context, id uuid.UUID) error {
 }
 
 func (s *service) HardDeleteArtist(ctx context.Context, id uuid.UUID) error {
-	if err := s.repo.DeleteArtist(ctx, id); err != nil {
+	oldArtist, err := s.repo.DeleteArtist(ctx, id)
+	if err != nil {
 		return fmt.Errorf("hard deleting artist: %w", err)
 	}
+
+	if oldArtist.ArtistImageUrl != nil {
+		err := s.storage.DeleteObject(
+			ctx,
+			constants.ProfilePicBucket,
+			*oldArtist.ArtistImageUrl,
+			storage.DeleteOptions{},
+		)
+		if err != nil {
+			slog.Warn(
+				"artist deleted but failed to delete old profile image object",
+				"error",
+				err,
+			)
+		}
+	}
+	if oldArtist.ArtistBannerUrl != nil {
+		err := s.storage.DeleteObject(
+			ctx,
+			constants.BannerBucket,
+			*oldArtist.ArtistBannerUrl,
+			storage.DeleteOptions{},
+		)
+		if err != nil {
+			slog.Warn(
+				"artist deleted but failed to delete old banner image object",
+				"error",
+				err,
+			)
+		}
+	}
+
 	return nil
 }
 
@@ -245,10 +288,12 @@ func (s *service) UploadArtistProfilePicture(
 	); err != nil {
 		return fmt.Errorf("uploading artist profile picture: %w", err)
 	}
-	if err := s.repo.UpdateArtist(ctx, &UpdateArtistReq{
+	oldArtist, err := s.repo.UpdateArtist(ctx, &UpdateArtistReq{
 		ID:             artistID,
 		ArtistImageKey: &objectKey,
-	}); err != nil {
+	})
+
+	if err != nil {
 		if errObj := s.storage.DeleteObject(
 			context.Background(),
 			constants.ProfilePicBucket,
@@ -256,12 +301,31 @@ func (s *service) UploadArtistProfilePicture(
 			storage.DeleteOptions{},
 		); errObj != nil {
 			return fmt.Errorf(
-				"uploading artist profile picture: %w, attempting to remove object via sage: %w",
-				err,
-				errObj,
+				"uploading artist profile picture: %w, attempting to compensate via saga: %w",
+				apperrors.NewErrInternal().WithCause(err),
+				apperrors.NewErrInternal().WithCause(errObj),
 			)
 		}
-		return fmt.Errorf("uploading artist profile picture: %w", err)
+		return fmt.Errorf(
+			"uploading artist profile picture: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
+	}
+
+	if oldArtist.ArtistImageUrl != nil {
+		err := s.storage.DeleteObject(
+			ctx,
+			constants.ProfilePicBucket,
+			*oldArtist.ArtistImageUrl,
+			storage.DeleteOptions{},
+		)
+		if err != nil {
+			slog.Warn(
+				"updating old artist profile picture: failed to delete old picture",
+				"error",
+				err,
+			)
+		}
 	}
 
 	return nil
@@ -317,10 +381,11 @@ func (s *service) UploadArtistBannerPicture(
 		return fmt.Errorf("uploading artist banner: %w", err)
 	}
 
-	if err := s.repo.UpdateArtist(ctx, &UpdateArtistReq{
+	oldArtist, err := s.repo.UpdateArtist(ctx, &UpdateArtistReq{
 		ID:              artistID,
 		ArtistBannerKey: &objectKey,
-	}); err != nil {
+	})
+	if err != nil {
 		if errObj := s.storage.DeleteObject(
 			context.Background(),
 			constants.BannerBucket,
@@ -328,12 +393,28 @@ func (s *service) UploadArtistBannerPicture(
 			storage.DeleteOptions{},
 		); errObj != nil {
 			return fmt.Errorf(
-				"uploading artist banner: %w, attempting to remove object via sage: %w",
+				"uploading artist banner: %w, attempting compensate via saga: %w",
 				err,
 				errObj,
 			)
 		}
 		return fmt.Errorf("uploading artist banner: %w", err)
+	}
+
+	if oldArtist.ArtistBannerUrl != nil {
+		err := s.storage.DeleteObject(
+			ctx,
+			constants.BannerBucket,
+			*oldArtist.ArtistBannerUrl,
+			storage.DeleteOptions{},
+		)
+		if err != nil {
+			slog.Warn(
+				"updating old artist banner picture: failed to delete old banner",
+				"error",
+				err,
+			)
+		}
 	}
 
 	return nil
