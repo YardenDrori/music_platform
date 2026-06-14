@@ -8,7 +8,7 @@ CREATE TABLE albums (
   added_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at     TIMESTAMPTZ,
-  premiered_at   TIMESTAMPTZ,
+  premiered_at   TIMESTAMPTZ
 );
 
 CREATE TABLE album_artists (
