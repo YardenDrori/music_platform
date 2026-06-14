@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -67,11 +68,11 @@ func getAlbumByID(
 		ARRAY(SELECT user_id FROM album_contributors ac WHERE ac.album_id = a.id ORDER BY ac.user_id),
 		ARRAY(SELECT username FROM users u JOIN album_contributors ac ON u.id = ac.user_id WHERE ac.album_id = a.id ORDER BY ac.user_id),
 		ARRAY(SELECT profile_pic_key FROM users u JOIN album_contributors ac ON u.id = ac.user_id WHERE ac.album_id = a.id ORDER BY ac.user_id),
-		ARRAY(SELECT contributed_at FROM album_contributors ac WHERE ac.album_id = a.id ORDER BY ac.user_id)
-		FROM albums a
-		WHERE deleted_at IS NULL AND a.id = $1`
+		ARRAY(SELECT contributed_at FROM album_contributors ac WHERE ac.album_id = a.id ORDER BY ac.user_id)`
 	if forUpdate {
-		query += " FOR UPDATE"
+		query += " FROM albums a WHERE a.deleted_at IS NULL AND id = $1 FOR UPDATE"
+	} else {
+		query += ` FROM active_albums a WHERE a.id = $1`
 	}
 
 	artistIDs := []uuid.UUID{}
@@ -187,6 +188,13 @@ func (r *repository) NewAlbum(ctx context.Context, album *Album) error {
 		return fmt.Errorf("creating new album: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 
+	if _, err := r.db.Exec(
+		ctx,
+		`REFRESH MATERIALIZED VIEW CONCURRENTLY active_albums`,
+	); err != nil {
+		slog.Error("creating new album: failed to refresh view", "error", err)
+	}
+
 	return nil
 }
 
@@ -199,8 +207,8 @@ func (r *repository) GetAlbumsByName(ctx context.Context, name string) ([]Album,
 		ARRAY(SELECT username FROM users u JOIN album_contributors ac ON u.id = ac.user_id WHERE ac.album_id = a.id ORDER BY ac.user_id),
 		ARRAY(SELECT profile_pic_key FROM users u JOIN album_contributors ac ON u.id = ac.user_id WHERE ac.album_id = a.id ORDER BY ac.user_id),
 		ARRAY(SELECT contributed_at FROM album_contributors ac WHERE ac.album_id = a.id ORDER BY ac.user_id)
-		FROM albums a
-		WHERE deleted_at IS NULL AND name ILIKE '%' || $1 || '%'
+		FROM active_albums a
+		WHERE name ILIKE '%' || $1 || '%'
 		ORDER BY name ASC`,
 		name,
 	)
@@ -417,6 +425,14 @@ func (r *repository) UpdateAlbum(ctx context.Context, req *UpdateAlbumRequest) (
 			apperrors.NewErrInternal().WithCause(err),
 		)
 	}
+
+	if _, err := r.db.Exec(
+		ctx,
+		`REFRESH MATERIALIZED VIEW CONCURRENTLY active_albums`,
+	); err != nil {
+		slog.Error("updating album information: failed to refresh view", "error", err)
+	}
+
 	return oldAlbum, nil
 }
 
@@ -442,6 +458,13 @@ func (r *repository) DeleteAlbum(ctx context.Context, id uuid.UUID) (*Album, err
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("deleting album: %w", apperrors.NewErrInternal().WithCause(err))
+	}
+
+	if _, err := r.db.Exec(
+		ctx,
+		`REFRESH MATERIALIZED VIEW CONCURRENTLY active_albums`,
+	); err != nil {
+		slog.Error("deleting album: failed to refresh view", "error", err)
 	}
 
 	return oldAlbum, nil

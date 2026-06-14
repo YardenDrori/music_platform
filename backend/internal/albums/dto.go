@@ -9,7 +9,7 @@ import (
 type NewAlbumRequest struct {
 	Name         string      `json:"name"`
 	Description  *string     `json:"description"`
-	MainArtistID uuid.UUID   `json:"mainArtistID"`
+	MainArtistID *uuid.UUID  `json:"mainArtistID"`
 	HasAllTracks bool        `json:"hasAllTracks"`
 	PremieredAt  *time.Time  `json:"premieredAt"`
 	Artists      []uuid.UUID `json:"artists"`

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -41,10 +42,11 @@ func getArtistByID(
 	ARRAY(SELECT user_id FROM artist_contributors ac WHERE ac.artist_id = a.id ORDER BY ac.user_id),
 	ARRAY(SELECT username FROM users u JOIN artist_contributors ac ON ac.user_id = u.id WHERE a.id = ac.artist_id ORDER BY ac.user_id),
 	ARRAY(SELECT profile_pic_key FROM users u JOIN artist_contributors ac ON ac.user_id = u.id WHERE a.id = ac.artist_id ORDER BY ac.user_id),
-	ARRAY(SELECT contributed_at FROM artist_contributors ac WHERE ac.artist_id = a.id ORDER BY ac.user_id)
-	FROM artists a WHERE a.deleted_at IS NULL AND a.id = $1`
+	ARRAY(SELECT contributed_at FROM artist_contributors ac WHERE ac.artist_id = a.id ORDER BY ac.user_id)`
 	if forUpdate {
-		query += ` FOR UPDATE`
+		query += " FROM artists a WHERE a.deleted_at IS NULL AND id = $1 FOR UPDATE"
+	} else {
+		query += ` FROM active_artists a WHERE a.id = $1`
 	}
 
 	artist := Artist{}
@@ -172,6 +174,14 @@ func (r *postgresRepository) NewArtist(
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal().WithCause(err))
 	}
+
+	if _, err := r.db.Exec(
+		ctx,
+		`REFRESH MATERIALIZED VIEW CONCURRENTLY active_artists`,
+	); err != nil {
+		slog.Error("creating new artist: failed to refresh view", "error", err)
+	}
+
 	return nil
 }
 
@@ -188,10 +198,10 @@ func (r *postgresRepository) GetArtistsByNameOrAlias(
 	ARRAY(SELECT username FROM users u JOIN artist_contributors ac ON ac.user_id = u.id WHERE a.id = ac.artist_id ORDER BY ac.user_id),
 	ARRAY(SELECT profile_pic_key FROM users u JOIN artist_contributors ac ON ac.user_id = u.id WHERE a.id = ac.artist_id ORDER BY ac.user_id),
 	ARRAY(SELECT contributed_at FROM artist_contributors ac WHERE ac.artist_id = a.id ORDER BY ac.user_id)
-	FROM artists a WHERE a.deleted_at IS NULL
-	AND (a.name ILIKE '%' || $1 || '%' OR EXISTS (
+	FROM active_artists a WHERE
+	a.name ILIKE '%' || $1 || '%' OR EXISTS (
 		SELECT 1 FROM artist_aliases aa WHERE aa.artist_id = a.id AND aa.alias ILIKE '%' || $1 || '%'
-	))`,
+	)`,
 		name,
 	)
 	if err != nil {
@@ -471,6 +481,14 @@ func (r *postgresRepository) UpdateArtist(
 			apperrors.NewErrInternal().WithCause(err),
 		)
 	}
+
+	if _, err := r.db.Exec(
+		ctx,
+		`REFRESH MATERIALIZED VIEW CONCURRENTLY active_artists`,
+	); err != nil {
+		slog.Error("updating artist information: failed to refresh view", "error", err)
+	}
+
 	return oldArtist, nil
 }
 
@@ -479,6 +497,7 @@ func (r *postgresRepository) DeleteArtist(ctx context.Context, id uuid.UUID) (*A
 	if err != nil {
 		return nil, fmt.Errorf("deleting artist: %w", apperrors.NewErrInternal().WithCause(err))
 	}
+	//nolint
 	defer tx.Rollback(ctx)
 
 	oldArtist, err := getArtistByID(ctx, tx, id, true)
@@ -496,5 +515,13 @@ func (r *postgresRepository) DeleteArtist(ctx context.Context, id uuid.UUID) (*A
 	if err := tx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("deleting artist: %w", apperrors.NewErrInternal().WithCause(err))
 	}
+
+	if _, err := r.db.Exec(
+		ctx,
+		`REFRESH MATERIALIZED VIEW CONCURRENTLY active_artists`,
+	); err != nil {
+		slog.Error("deleting artist: failed to refresh view", "error", err)
+	}
+
 	return oldArtist, nil
 }
