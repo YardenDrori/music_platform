@@ -153,7 +153,7 @@ func (h *handler) AddProfilePicture(w http.ResponseWriter, r *http.Request) erro
 	return httputils.WriteResponse(w, http.StatusOK, nil)
 }
 
-const maxBannerBytes = 200 * 1024 * 1024 // 200MB
+const maxBannerBytes = 100 * 1024 * 1024 // 100MB
 func (h *handler) AddBanner(w http.ResponseWriter, r *http.Request) error {
 	artistIDRaw := r.PathValue("id")
 	if artistIDRaw == "" {

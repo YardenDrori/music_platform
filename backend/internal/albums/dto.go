@@ -37,7 +37,7 @@ type UpdateAlbumRequest struct {
 	Name                   *string     `json:"name"`
 	Description            *string     `json:"description"`
 	MainArtistID           *uuid.UUID  `json:"mainArtistId"`
-	AlbumArtKey            *uuid.UUID  `json:"albumArtKey"`
+	AlbumArtKey            *uuid.UUID  `json:"-"`
 	HasAllTracks           *bool       `json:"hasAllTracks"`
 	DeletedAt              *time.Time  `json:"-"`
 	PremieredAt            *time.Time  `json:"premieredAt"`
