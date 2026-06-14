@@ -1,3 +1,6 @@
-DROP TABLE song_artists;
-DROP TABLE songs;
-DROP TYPE upload_source;
+DROP TABLE IF EXISTS plays;
+DROP TABLE IF EXISTS song_artists;
+DROP TABLE IF EXISTS song_contributors;
+DROP TABLE IF EXISTS songs;
+DROP TYPE IF EXISTS upload_source;
+DROP TYPE IF EXISTS song_type;
