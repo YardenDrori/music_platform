@@ -193,7 +193,7 @@ func (s *service) UploadAlbumPicture(ctx context.Context, file []byte, albumID u
 			storage.DeleteOptions{},
 		); errObj != nil {
 			return fmt.Errorf(
-				"uploading album art: %w, attempting to remove object via sage: %w",
+				"uploading album art: %w, attempting to compensate via saga: %w",
 				err,
 				errObj,
 			)
