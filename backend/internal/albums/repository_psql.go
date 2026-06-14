@@ -49,6 +49,85 @@ func (r *repository) handleQueryError(
 	)
 }
 
+type querier interface {
+	QueryRow(ctx context.Context, query string, args ...any) pgx.Row
+}
+
+func getAlbumByID(
+	ctx context.Context,
+	querier querier,
+	id uuid.UUID,
+	forUpdate bool,
+) (*Album, error) {
+	album := Album{}
+	query := `
+		SELECT a.id, a.name, a.description, a.main_artist_id, a.album_art_key,
+		a.has_all_tracks, a.added_at, a.updated_at, a.deleted_at, a.premiered_at,
+		ARRAY(SELECT artist_id FROM album_artists aa WHERE aa.album_id = a.id),
+		ARRAY(SELECT user_id FROM album_contributors ac WHERE ac.album_id = a.id ORDER BY ac.user_id),
+		ARRAY(SELECT username FROM users u JOIN album_contributors ac ON u.id = ac.user_id WHERE ac.album_id = a.id ORDER BY ac.user_id),
+		ARRAY(SELECT profile_pic_key FROM users u JOIN album_contributors ac ON u.id = ac.user_id WHERE ac.album_id = a.id ORDER BY ac.user_id),
+		ARRAY(SELECT contributed_at FROM album_contributors ac WHERE ac.album_id = a.id ORDER BY ac.user_id)
+		FROM albums a
+		WHERE deleted_at IS NULL AND a.id = $1`
+	if forUpdate {
+		query += " FOR UPDATE"
+	}
+
+	artistIDs := []uuid.UUID{}
+	userIDs := []uuid.UUID{}
+	profilePicKeys := []*string{}
+	userNames := []string{}
+	contributionDates := []time.Time{}
+
+	err := querier.QueryRow(ctx, query,
+		id,
+	).Scan(
+		&album.ID,
+		&album.Name,
+		&album.Description,
+		&album.MainArtistID,
+		&album.AlbumArtUrl,
+		&album.HasAllTracks,
+		&album.AddedAt,
+		&album.UpdatedAt,
+		&album.DeletedAt,
+		&album.PremieredAt,
+		&artistIDs,
+		&userIDs,
+		&userNames,
+		&profilePicKeys,
+		&contributionDates,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf(
+				"getting album via id: %w",
+				apperrors.NewErrNotFound("album not found"),
+			)
+		}
+		return nil, fmt.Errorf(
+			"getting album via id: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
+	}
+
+	album.Artists = append(album.Artists, artistIDs...)
+
+	//all contribution related arrays are the same length
+	for i := range userIDs {
+		newContributor := Contributor{
+			ContributorID:         userIDs[i],
+			ContributorName:       userNames[i],
+			ContributorProfileUrl: profilePicKeys[i],
+			ContributionDate:      contributionDates[i],
+		}
+		album.Contributors = append(album.Contributors, newContributor)
+	}
+
+	return &album, nil
+}
+
 func (r *repository) NewAlbum(ctx context.Context, album *Album) error {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
@@ -198,74 +277,13 @@ func (r *repository) GetAlbumsByName(ctx context.Context, name string) ([]Album,
 }
 
 func (r *repository) GetAlbumByID(ctx context.Context, id uuid.UUID) (*Album, error) {
-	album := Album{}
-	artistIDs := []uuid.UUID{}
-	userIDs := []uuid.UUID{}
-	profilePicKeys := []*string{}
-	userNames := []string{}
-	contributionDates := []time.Time{}
-
-	err := r.db.QueryRow(ctx, `
-		SELECT a.id, a.name, a.description, a.main_artist_id, a.album_art_key,
-		a.has_all_tracks, a.added_at, a.updated_at, a.deleted_at, a.premiered_at,
-		ARRAY(SELECT artist_id FROM album_artists aa WHERE aa.album_id = a.id),
-		ARRAY(SELECT user_id FROM album_contributors ac WHERE ac.album_id = a.id ORDER BY ac.user_id),
-		ARRAY(SELECT username FROM users u JOIN album_contributors ac ON u.id = ac.user_id WHERE ac.album_id = a.id ORDER BY ac.user_id),
-		ARRAY(SELECT profile_pic_key FROM users u JOIN album_contributors ac ON u.id = ac.user_id WHERE ac.album_id = a.id ORDER BY ac.user_id),
-		ARRAY(SELECT contributed_at FROM album_contributors ac WHERE ac.album_id = a.id ORDER BY ac.user_id)
-		FROM albums a
-		WHERE deleted_at IS NULL AND a.id = $1`,
-		id,
-	).Scan(
-		&album.ID,
-		&album.Name,
-		&album.Description,
-		&album.MainArtistID,
-		&album.AlbumArtUrl,
-		&album.HasAllTracks,
-		&album.AddedAt,
-		&album.UpdatedAt,
-		&album.DeletedAt,
-		&album.PremieredAt,
-		&artistIDs,
-		&userIDs,
-		&userNames,
-		&profilePicKeys,
-		&contributionDates,
-	)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf(
-				"getting album via id: %w",
-				apperrors.NewErrNotFound("album not found"),
-			)
-		}
-		return nil, fmt.Errorf(
-			"getting album via id: %w",
-			apperrors.NewErrInternal().WithCause(err),
-		)
-	}
-
-	album.Artists = append(album.Artists, artistIDs...)
-
-	//all contribution related arrays are the same length
-	for i := range userIDs {
-		newContributor := Contributor{
-			ContributorID:         userIDs[i],
-			ContributorName:       userNames[i],
-			ContributorProfileUrl: profilePicKeys[i],
-			ContributionDate:      contributionDates[i],
-		}
-		album.Contributors = append(album.Contributors, newContributor)
-	}
-
-	return &album, nil
+	return getAlbumByID(ctx, r.db, id, false)
 }
 
-func (r *repository) UpdateAlbum(ctx context.Context, req *UpdateAlbumRequest) error {
+func (r *repository) UpdateAlbum(ctx context.Context, req *UpdateAlbumRequest) (*Album, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"updating album information: %w",
 			apperrors.NewErrInternal().WithCause(err),
 		)
@@ -306,6 +324,11 @@ func (r *repository) UpdateAlbum(ctx context.Context, req *UpdateAlbumRequest) e
 	}
 	args = append(args, req.ID)
 
+	oldAlbum, err := getAlbumByID(ctx, tx, req.ID, true)
+	if err != nil {
+		return nil, fmt.Errorf("updating album information: %w", err)
+	}
+
 	tag, err := tx.Exec(ctx, fmt.Sprintf("UPDATE albums SET %v WHERE id = $%d",
 		strings.Join(setClauses, ", "),
 		len(args),
@@ -313,10 +336,10 @@ func (r *repository) UpdateAlbum(ctx context.Context, req *UpdateAlbumRequest) e
 		args...,
 	)
 	if err != nil {
-		return r.handleQueryError("updating album information", "main artist", err)
+		return nil, r.handleQueryError("updating album information", "main artist", err)
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"updating album information: %w",
 			apperrors.NewErrNotFound("album not found"),
 		)
@@ -329,7 +352,7 @@ func (r *repository) UpdateAlbum(ctx context.Context, req *UpdateAlbumRequest) e
 			artist,
 		)
 		if err != nil {
-			return r.handleQueryError(
+			return nil, r.handleQueryError(
 				"updating album information",
 				"artist for this album",
 				err,
@@ -343,13 +366,13 @@ func (r *repository) UpdateAlbum(ctx context.Context, req *UpdateAlbumRequest) e
 			artist,
 		)
 		if err != nil {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"updating album information: %w",
 				apperrors.NewErrInternal().WithCause(err),
 			)
 		}
 		if tag.RowsAffected() == 0 {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"updating album information: %w",
 				apperrors.NewErrNotFound("artist isn't featured in this album"),
 			)
@@ -362,7 +385,7 @@ func (r *repository) UpdateAlbum(ctx context.Context, req *UpdateAlbumRequest) e
 			contr,
 		)
 		if err != nil {
-			return r.handleQueryError(
+			return nil, r.handleQueryError(
 				"updating album information",
 				"contributor for this album",
 				err,
@@ -376,34 +399,50 @@ func (r *repository) UpdateAlbum(ctx context.Context, req *UpdateAlbumRequest) e
 			contr,
 		)
 		if err != nil {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"updating album information: %w",
 				apperrors.NewErrInternal().WithCause(err),
 			)
 		}
 		if tag.RowsAffected() == 0 {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"updating album information: %w",
 				apperrors.NewErrNotFound("user isn't a contributor of this album"),
 			)
 		}
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"updating album information: %w",
 			apperrors.NewErrInternal().WithCause(err),
 		)
 	}
-	return nil
+	return oldAlbum, nil
 }
 
-func (r *repository) DeleteAlbum(ctx context.Context, id uuid.UUID) error {
-	tag, err := r.db.Exec(ctx, "DELETE FROM albums WHERE id = $1", id)
+func (r *repository) DeleteAlbum(ctx context.Context, id uuid.UUID) (*Album, error) {
+	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("deleting album: %w", apperrors.NewErrInternal().WithCause(err))
+		return nil, fmt.Errorf("deleting album: %w", apperrors.NewErrInternal().WithCause(err))
+	}
+	//nolint
+	defer tx.Rollback(ctx)
+
+	oldAlbum, err := getAlbumByID(ctx, tx, id, true)
+	if err != nil {
+		return nil, fmt.Errorf("deleting album: %w", err)
+	}
+
+	tag, err := tx.Exec(ctx, "DELETE FROM albums WHERE id = $1", id)
+	if err != nil {
+		return nil, fmt.Errorf("deleting album: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 	if tag.RowsAffected() == 0 {
-		return fmt.Errorf("deleting album: %w", apperrors.NewErrNotFound("album not found"))
+		return nil, fmt.Errorf("deleting album: %w", apperrors.NewErrNotFound("album not found"))
 	}
-	return nil
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("deleting album: %w", apperrors.NewErrInternal().WithCause(err))
+	}
+
+	return oldAlbum, nil
 }

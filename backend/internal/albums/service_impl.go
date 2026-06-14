@@ -7,6 +7,7 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -76,7 +77,7 @@ func validateUpdateAlbumReq(req *UpdateAlbumRequest) error {
 func (s *service) NewAlbum(ctx context.Context, req *NewAlbumRequest) error {
 	requesterID, err := identity.UserIDFromContext(ctx)
 	if err != nil {
-		return fmt.Errorf("crating new album: %w", err)
+		return fmt.Errorf("creating new album: %w", err)
 	}
 
 	if err := s.validateNewAlbumReq(req); err != nil {
@@ -114,7 +115,17 @@ func (s *service) GetAlbumByID(ctx context.Context, id uuid.UUID) (*Album, error
 	return album, nil
 }
 
+// Updates most album details
+// to update the album art image use the dedicated method
 func (s *service) UpdateAlbumDetails(ctx context.Context, req *UpdateAlbumRequest) error {
+	if req.AlbumArtKey != nil {
+		return fmt.Errorf(
+			"updating album details: %w",
+			apperrors.NewErrInternal().
+				WithInternal("image keys must be updated via the dedicated upload endpoints"),
+		)
+	}
+
 	requesterID, err := identity.UserIDFromContext(ctx)
 	if err != nil {
 		return fmt.Errorf("updating album details: %w", err)
@@ -123,7 +134,7 @@ func (s *service) UpdateAlbumDetails(ctx context.Context, req *UpdateAlbumReques
 		return fmt.Errorf("updating album details: %w", err)
 	}
 	req.ContributorIDsToAdd = append(req.ContributorIDsToAdd, requesterID)
-	if err := s.repo.UpdateAlbum(ctx, req); err != nil {
+	if _, err := s.repo.UpdateAlbum(ctx, req); err != nil {
 		return fmt.Errorf("updating album details: %w", err)
 	}
 	return nil
@@ -131,15 +142,27 @@ func (s *service) UpdateAlbumDetails(ctx context.Context, req *UpdateAlbumReques
 
 func (s *service) SoftDeleteAlbum(ctx context.Context, id uuid.UUID) error {
 	now := time.Now().UTC()
-	if err := s.repo.UpdateAlbum(ctx, &UpdateAlbumRequest{ID: id, DeletedAt: &now}); err != nil {
+	if _, err := s.repo.UpdateAlbum(ctx, &UpdateAlbumRequest{ID: id, DeletedAt: &now}); err != nil {
 		return fmt.Errorf("soft deleting album: %w", err)
 	}
 	return nil
 }
 
 func (s *service) HardDeleteAlbum(ctx context.Context, id uuid.UUID) error {
-	if err := s.repo.DeleteAlbum(ctx, id); err != nil {
+	oldAlbum, err := s.repo.DeleteAlbum(ctx, id)
+	if err != nil {
 		return fmt.Errorf("hard deleting album: %w", err)
+	}
+	if oldAlbum.AlbumArtUrl != nil {
+		err = s.storage.DeleteObject(
+			ctx,
+			constants.AlbumArtBucket,
+			*oldAlbum.AlbumArtUrl,
+			storage.DeleteOptions{},
+		)
+		if err != nil {
+			slog.Warn("hard deleting album: failed to delete album art", "error", err)
+		}
 	}
 	return nil
 }
@@ -182,10 +205,11 @@ func (s *service) UploadAlbumPicture(ctx context.Context, file []byte, albumID u
 		return fmt.Errorf("uploading album art: %w", err)
 	}
 
-	if err := s.repo.UpdateAlbum(ctx, &UpdateAlbumRequest{
+	oldAlbum, err := s.repo.UpdateAlbum(ctx, &UpdateAlbumRequest{
 		ID:          albumID,
 		AlbumArtKey: &objectKey,
-	}); err != nil {
+	})
+	if err != nil {
 		if errObj := s.storage.DeleteObject(
 			context.Background(),
 			constants.AlbumArtBucket,
@@ -199,6 +223,18 @@ func (s *service) UploadAlbumPicture(ctx context.Context, file []byte, albumID u
 			)
 		}
 		return fmt.Errorf("uploading album art: %w", err)
+	}
+
+	if oldAlbum.AlbumArtUrl != nil {
+		err = s.storage.DeleteObject(
+			ctx,
+			constants.AlbumArtBucket,
+			*oldAlbum.AlbumArtUrl,
+			storage.DeleteOptions{},
+		)
+		if err != nil {
+			slog.Warn("replacing old album art: failed to delete old album art", "error", err)
+		}
 	}
 
 	return nil
