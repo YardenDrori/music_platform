@@ -22,6 +22,9 @@ CREATE TABLE artist_aliases (
   UNIQUE(artist_id, alias)
 );
 
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX idx_artists_aliases ON artist_aliases USING GIN(alias gin_trgm_ops);
+
 CREATE TABLE artist_contributors (
   artist_id UUID REFERENCES artists(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -29,7 +32,10 @@ CREATE TABLE artist_contributors (
   PRIMARY KEY (artist_id, user_id)
 );
 
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE INDEX idx_artists_name ON artists(name) WHERE deleted_at IS NULL;
-CREATE INDEX idx_artists_fuzzy ON artists USING GIN(name gin_trgm_ops) WHERE deleted_at IS NULL;
-CREATE INDEX idx_artists_aliases ON artist_aliases USING GIN(alias gin_trgm_ops) WHERE deleted_at IS NULL;
+CREATE INDEX idx_artist_contributors ON artist_contributors(user_id);
+
+CREATE MATERIALIZED VIEW active_artists AS
+SELECT * FROM artists WHERE deleted_at IS NULL;
+
+CREATE UNIQUE INDEX idx_active_artists_id ON active_artists(id);
+CREATE INDEX idx_active_artists_name_fuzzy ON active_artists USING GIN(name gin_trgm_ops);
