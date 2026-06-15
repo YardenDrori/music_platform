@@ -33,25 +33,25 @@ CREATE TABLE songs (
 CREATE UNIQUE INDEX idx_songs_track_number ON songs(track_number, album_id) WHERE album_id IS NOT NULL AND deleted_at IS NULL; 
 
 CREATE MATERIALIZED VIEW active_songs AS SELECT 
-  id,
-  title,
+  s.id,
+  s.title,
   CASE WHEN s.main_artist_id IS NOT NULL AND ar.deleted_at IS NULL THEN s.main_artist_id ELSE NULL END AS main_artist_id,
   CASE WHEN s.album_id IS NOT NULL AND al.deleted_at IS NULL THEN s.album_id ELSE NULL END AS album_id,
   CASE WHEN s.album_id IS NOT NULL AND al.deleted_at IS NULL THEN s.track_number ELSE NULL END AS track_number,
-  premiered_at,
-  runtime_ms,
+  s.premiered_at,
+  s.runtime_ms,
   CASE WHEN s.album_id IS NOT NULL AND al.deleted_at IS NULL THEN s.song_type ELSE 'orphaned'::song_type END AS song_type,
-  upload_method,
-  is_public,
-  audio_key,
-  cover_art_key,
-  added_at,
-  updated_at,
-  deleted_at
+  s.upload_method,
+  s.is_public,
+  s.audio_key,
+  s.cover_art_key,
+  s.added_at,
+  s.updated_at,
+  s.deleted_at
 FROM songs s
 LEFT JOIN artists ar ON s.main_artist_id = ar.id
 LEFT JOIN albums al ON s.album_id = al.id
-WHERE deleted_at IS NULL;
+WHERE s.deleted_at IS NULL;
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE UNIQUE INDEX idx_active_songs_id ON active_songs(id); --to allow parallel updates
