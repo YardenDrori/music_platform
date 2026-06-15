@@ -135,7 +135,7 @@ func (r *repository) NewAlbum(ctx context.Context, album *Album) error {
 		return fmt.Errorf("creating new album: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 	//nolint
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(context.Background())
 
 	_, err = tx.Exec(ctx, `
 	INSERT INTO albums (id, name, description, main_artist_id, album_art_key,
@@ -297,7 +297,7 @@ func (r *repository) UpdateAlbum(ctx context.Context, req *UpdateAlbumRequest) (
 		)
 	}
 	//nolint
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(context.Background())
 
 	setClauses := []string{"updated_at = NOW()"}
 	args := []any{}
@@ -442,7 +442,7 @@ func (r *repository) DeleteAlbum(ctx context.Context, id uuid.UUID) (*Album, err
 		return nil, fmt.Errorf("deleting album: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 	//nolint
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(context.Background())
 
 	oldAlbum, err := getAlbumByID(ctx, tx, id, true)
 	if err != nil {

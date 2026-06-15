@@ -118,7 +118,7 @@ func (r *postgresRepository) NewArtist(
 		return fmt.Errorf("creating new artist: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 	//nolint
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(context.Background())
 
 	_, err = tx.Exec(ctx, `
 		INSERT INTO artists (id, name,  description, is_band, artist_image_key,
@@ -360,7 +360,7 @@ func (r *postgresRepository) UpdateArtist(
 		)
 	}
 	//nolint
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(context.Background())
 
 	oldArtist, err := getArtistByID(ctx, tx, req.ID, true)
 	if err != nil {
@@ -498,7 +498,7 @@ func (r *postgresRepository) DeleteArtist(ctx context.Context, id uuid.UUID) (*A
 		return nil, fmt.Errorf("deleting artist: %w", apperrors.NewErrInternal().WithCause(err))
 	}
 	//nolint
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(context.Background())
 
 	oldArtist, err := getArtistByID(ctx, tx, id, true)
 	if err != nil {
