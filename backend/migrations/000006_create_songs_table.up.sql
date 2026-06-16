@@ -84,6 +84,12 @@ CREATE TABLE song_contributors (
 
 CREATE INDEX idx_song_contributors ON song_contributors(user_id);
 
+CREATE TABLE song_whitelisted_users (
+  song_id UUID REFERENCES songs(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  PRIMARY KEY (song_id, user_id)
+);
+
 CREATE OR REPLACE FUNCTION orphan_songs_on_album_deletion()
 RETURNS TRIGGER AS $$
 BEGIN
