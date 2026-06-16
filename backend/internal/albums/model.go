@@ -22,11 +22,9 @@ type Album struct {
 }
 
 type AlbumSummary struct {
-	ID           uuid.UUID   `json:"id"`
-	Name         string      `json:"name"`
-	AlbumArtUrl  *string     `json:"albumArtUrl"`
-	MainArtistID *uuid.UUID  `json:"mainArtistId"`
-	Artists      []uuid.UUID `json:"artists"`
+	ID          uuid.UUID  `json:"id"`
+	Name        string     `json:"name"`
+	AlbumArtKey *uuid.UUID `json:"albumArtUrl"`
 }
 
 type Contributor struct {
