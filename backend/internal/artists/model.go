@@ -25,12 +25,6 @@ type Artist struct {
 	Contributions    []Contribution `json:"contributions"`
 }
 
-type ArtistSummary struct {
-	ArtistID                uuid.UUID  `json:"artistId"`
-	ArtistName              string     `json:"artistName"`
-	ArtistProfilePictureKey *uuid.UUID `json:"artistProfilePictureKey"`
-}
-
 type Contribution struct {
 	ContributorID         uuid.UUID `json:"contributorId"`
 	ContributorName       string    `json:"contributorName"`

@@ -7,15 +7,16 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID `json:"id"`
-	Email        string    `json:"email"`
-	Username     string    `json:"username"`
-	FirstName    string    `json:"firstName"`
-	LastName     string    `json:"lastName"`
-	PasswordHash string    `json:"-"`
-	CreatedAt   time.Time `json:"createdAt"`
-	LastUpdated time.Time `json:"lastUpdated"`
-	Active      bool      `json:"-"`
+	ID            uuid.UUID
+	Email         string
+	Username      string
+	FirstName     string
+	LastName      string
+	ProfilePicKey *uuid.UUID
+	PasswordHash  string
+	CreatedAt     time.Time
+	LastUpdated   time.Time
+	// Active        bool
 }
 
 type NewUserRequest struct {
