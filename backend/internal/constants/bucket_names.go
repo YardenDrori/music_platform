@@ -2,6 +2,6 @@ package constants
 
 const (
 	ProfilePicBucket = "profile-pictures"
-	BannerBucket     = "banners"
+	BannerArtBucket  = "banner-art"
 	AlbumArtBucket   = "album-art"
 )
