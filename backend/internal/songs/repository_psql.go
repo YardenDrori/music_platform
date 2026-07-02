@@ -17,12 +17,12 @@ import (
 	"github.com/YardenDrori/music-platform/internal/summaries"
 )
 
-type repository struct {
+type postgresRepository struct {
 	db *pgxpool.Pool
 }
 
-func NewRepository(db *pgxpool.Pool) Repository {
-	return &repository{db: db}
+func NewRepository(db *pgxpool.Pool) repository {
+	return &postgresRepository{db: db}
 }
 
 func handleQueryErrors(err error, operationDesc string, operationOn string) error {
@@ -49,7 +49,7 @@ func handleQueryErrors(err error, operationDesc string, operationOn string) erro
 	)
 }
 
-func (r *repository) NewSong(ctx context.Context, song NewSong) error {
+func (r *postgresRepository) NewSong(ctx context.Context, song NewSong) error {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("registering new song: %w", apperrors.NewErrInternal().WithCause(err))
@@ -173,11 +173,11 @@ func getSongByID(
 	return song, nil
 }
 
-func (r *repository) GetSongByID(ctx context.Context, id uuid.UUID) (*SongRow, error) {
+func (r *postgresRepository) GetSongByID(ctx context.Context, id uuid.UUID) (*SongRow, error) {
 	return getSongByID(ctx, r.db, id, false)
 }
 
-func (r *repository) GetSongSummariesByName(
+func (r *postgresRepository) GetSongSummariesByName(
 	ctx context.Context,
 	songName string,
 	limit int,
@@ -224,7 +224,7 @@ func (r *repository) GetSongSummariesByName(
 	return songs, nil
 }
 
-func (r *repository) UpdateSong(ctx context.Context, req *UpdateSongReq) (*SongRow, error) {
+func (r *postgresRepository) UpdateSong(ctx context.Context, req *UpdateSongReq) (*SongRow, error) {
 	setClauses := []string{"updated_at = NOW()"}
 	args := []any{}
 	i := 1
@@ -317,7 +317,10 @@ func (r *repository) UpdateSong(ctx context.Context, req *UpdateSongReq) (*SongR
 			return nil, fmt.Errorf("updating song: %w", apperrors.NewErrInternal().WithCause(err))
 		}
 		if tag.RowsAffected() == 0 {
-			return nil, fmt.Errorf("updating song: %w", apperrors.NewErrNotFound("song artist not found"))
+			return nil, fmt.Errorf(
+				"updating song: %w",
+				apperrors.NewErrNotFound("song artist not found"),
+			)
 		}
 	}
 
@@ -339,14 +342,19 @@ func (r *repository) UpdateSong(ctx context.Context, req *UpdateSongReq) (*SongR
 			return nil, fmt.Errorf("updating song: %w", apperrors.NewErrInternal().WithCause(err))
 		}
 		if tag.RowsAffected() == 0 {
-			return nil, fmt.Errorf("updating song: %w", apperrors.NewErrNotFound("song contribution not found"))
+			return nil, fmt.Errorf(
+				"updating song: %w",
+				apperrors.NewErrNotFound("song contribution not found"),
+			)
 		}
 	}
 
 	for _, userID := range req.WhitelistToAdd {
-		if _, err := tx.Exec(ctx,
+		if _, err := tx.Exec(
+			ctx,
 			`INSERT INTO song_whitelisted_users (song_id, user_id) VALUES($1, $2) ON CONFLICT DO NOTHING`,
-			req.ID, userID,
+			req.ID,
+			userID,
 		); err != nil {
 			return nil, handleQueryErrors(err, "updating song", "whitelisted user")
 		}
@@ -360,7 +368,10 @@ func (r *repository) UpdateSong(ctx context.Context, req *UpdateSongReq) (*SongR
 			return nil, fmt.Errorf("updating song: %w", apperrors.NewErrInternal().WithCause(err))
 		}
 		if tag.RowsAffected() == 0 {
-			return nil, fmt.Errorf("updating song: %w", apperrors.NewErrNotFound("whitelisted user not found"))
+			return nil, fmt.Errorf(
+				"updating song: %w",
+				apperrors.NewErrNotFound("whitelisted user not found"),
+			)
 		}
 	}
 
@@ -375,7 +386,7 @@ func (r *repository) UpdateSong(ctx context.Context, req *UpdateSongReq) (*SongR
 	return oldSong, nil
 }
 
-func (r *repository) DeleteSong(ctx context.Context, id uuid.UUID) (*SongRow, error) {
+func (r *postgresRepository) DeleteSong(ctx context.Context, id uuid.UUID) (*SongRow, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("deleting song: %w", apperrors.NewErrInternal().WithCause(err))

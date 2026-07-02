@@ -8,10 +8,12 @@ import (
 	"github.com/YardenDrori/music-platform/internal/summaries"
 )
 
-type Repository interface {
+type repository interface {
 	NewSong(ctx context.Context, song NewSong) error
 	GetSongByID(ctx context.Context, id uuid.UUID) (*SongRow, error)
 	GetSongSummariesByName(ctx context.Context, songName string, limit int) ([]summaries.SongSummary, error)
 	UpdateSong(ctx context.Context, req *UpdateSongReq) (*SongRow, error)
 	DeleteSong(ctx context.Context, id uuid.UUID) (*SongRow, error)
 }
+
+type Service interface
