@@ -40,6 +40,15 @@ func (s *service) BuildPublicGetUrl(bucketName string, objectKey string) *string
 	return &result
 }
 
+func toMinioChecksum(c checksumAlgo) minio.ChecksumType {
+	switch c {
+	case checksumSha256:
+		return minio.ChecksumSHA256
+	default:
+		return minio.ChecksumNone
+	}
+}
+
 func (s *service) PresignedUpload(
 	ctx context.Context,
 	bucketName string,
@@ -66,8 +75,8 @@ func (s *service) PutObject(
 	opts PutOptions,
 ) error {
 	minioOpts := minio.PutObjectOptions{
-		ContentType:    opts.ContentType,
-		SendContentMd5: opts.SendContentMD5,
+		ContentType: opts.ContentType,
+		Checksum:    toMinioChecksum(opts.checksum),
 	}
 	_, err := s.s3Core.Client.PutObject(ctx, bucketName, objectKey, reader, size, minioOpts)
 	if err != nil {
@@ -86,8 +95,8 @@ func (s *service) InitiateMultipartUpload(
 	opts PutOptions,
 ) (string, error) {
 	minioOpts := minio.PutObjectOptions{
-		ContentType:    opts.ContentType,
-		SendContentMd5: opts.SendContentMD5,
+		ContentType: opts.ContentType,
+		Checksum:    toMinioChecksum(opts.checksum),
 	}
 
 	uploadID, err := s.s3Core.NewMultipartUpload(ctx, bucketName, objectKey, minioOpts)
@@ -137,8 +146,8 @@ func (s *service) CompleteMultipartUpload(
 ) error {
 
 	minioOpts := minio.PutObjectOptions{
-		ContentType:    opts.ContentType,
-		SendContentMd5: opts.SendContentMD5,
+		ContentType: opts.ContentType,
+		Checksum:    toMinioChecksum(opts.checksum),
 	}
 
 	_, err := s.s3Core.CompleteMultipartUpload(

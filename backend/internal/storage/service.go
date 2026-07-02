@@ -8,9 +8,16 @@ import (
 	"github.com/minio/minio-go/v7"
 )
 
+type checksumAlgo string
+
+const (
+	checksumNone   checksumAlgo = "none"
+	checksumSha256 checksumAlgo = "sha256"
+)
+
 type PutOptions struct {
-	ContentType    string
-	SendContentMD5 bool
+	ContentType string
+	checksum    checksumAlgo
 }
 
 type DeleteOptions struct {
