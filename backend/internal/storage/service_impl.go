@@ -61,7 +61,10 @@ func (s *service) PresignedUpload(
 		s.preginedURLsDuration,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("generating a presigned url for a put request: %w", err)
+		return nil, fmt.Errorf(
+			"generating a presigned url for a put request: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
 	}
 	return uploadUrl, nil
 }
@@ -101,7 +104,10 @@ func (s *service) InitiateMultipartUpload(
 
 	uploadID, err := s.s3Core.NewMultipartUpload(ctx, bucketName, objectKey, minioOpts)
 	if err != nil {
-		return "", fmt.Errorf("initiating new presigned multipart upload: %w", err)
+		return "", fmt.Errorf(
+			"initiating new presigned multipart upload: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
 	}
 	return uploadID, nil
 }
@@ -128,7 +134,10 @@ func (s *service) GetPresignedMultipartPartsURLs(
 			req,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("generating presigned multipart upload URLs: %w", err)
+			return nil, fmt.Errorf(
+				"generating presigned multipart upload URLs: %w",
+				apperrors.NewErrInternal().WithCause(err),
+			)
 		}
 		presignedURLs = append(presignedURLs, url.String())
 	}
@@ -163,11 +172,14 @@ func (s *service) CompleteMultipartUpload(
 		if anotherErr != nil {
 			return fmt.Errorf(
 				"completing presgined multipart upload: %w %w",
-				err,
-				anotherErr,
+				apperrors.NewErrInternal().WithCause(err),
+				apperrors.NewErrInternal().WithCause(anotherErr),
 			)
 		}
-		return fmt.Errorf("completing presgined multipart upload: %w", err)
+		return fmt.Errorf(
+			"completing presgined multipart upload: %w",
+			apperrors.NewErrInternal().WithCause(err),
+		)
 	}
 
 	return nil
@@ -181,7 +193,7 @@ func (s *service) AbortMultipartUpload(
 ) error {
 	err := s.s3Core.AbortMultipartUpload(ctx, bucketName, objectKey, uploadID)
 	if err != nil {
-		return fmt.Errorf("aborting multipart upload %w", err)
+		return fmt.Errorf("aborting multipart upload %w", apperrors.NewErrInternal().WithCause(err))
 	}
 	return nil
 }
