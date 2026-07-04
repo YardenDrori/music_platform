@@ -4,8 +4,6 @@ import (
 	"context"
 	"io"
 	"net/url"
-
-	"github.com/minio/minio-go/v7"
 )
 
 type ChecksumAlgo string
@@ -26,9 +24,17 @@ type DeleteOptions struct {
 	VersionID        string
 }
 
+type CompletedPart struct {
+	PartNumber    int
+	ETag          string
+	ChecksumValue string
+	ChecksumAlgo  ChecksumAlgo
+}
+
 type Service interface {
 	//errors:
 	//fmt
+	//Initiates new multipart upload and returns the new uploadID.
 	InitiateMultipartUpload(
 		ctx context.Context,
 		bucketName string,
@@ -44,6 +50,7 @@ type Service interface {
 		objectKey string,
 		uploadID string,
 		totalPartsCount int,
+		checksums ...string,
 	) ([]string, error)
 
 	//errors:
@@ -53,7 +60,7 @@ type Service interface {
 		bucketName string,
 		objectKey string,
 		uploadID string,
-		ETags []minio.CompletePart,
+		parts []CompletedPart,
 		opts PutOptions,
 	) error
 

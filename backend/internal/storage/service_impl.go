@@ -49,6 +49,22 @@ func toMinioChecksum(c ChecksumAlgo) minio.ChecksumType {
 	}
 }
 
+func toMinioCompletePart(p ...CompletedPart) []minio.CompletePart {
+	var parts []minio.CompletePart
+	for _, part := range p {
+		minioPart := minio.CompletePart{
+			PartNumber: part.PartNumber,
+			ETag:       part.ETag,
+		}
+		switch part.ChecksumAlgo {
+		case ChecksumSha256:
+			minioPart.ChecksumSHA256 = part.ChecksumValue
+		}
+		parts = append(parts, minioPart)
+	}
+	return parts
+}
+
 func (s *service) PresignedUpload(
 	ctx context.Context,
 	bucketName string,
@@ -118,20 +134,41 @@ func (s *service) GetPresignedMultipartPartsURLs(
 	objectKey string,
 	uploadID string,
 	totalPartsCount int,
+	checksums ...string,
 ) ([]string, error) {
+
+	if len(checksums) != 0 && len(checksums) != totalPartsCount {
+		panic(
+			fmt.Sprintf(
+				"called GetPresignedMultipartPartsURLs with totalPartsCount: %d, but %d items in checksums",
+				totalPartsCount,
+				len(checksums),
+			),
+		)
+	}
+
 	var presignedURLs []string
 	for idx := range totalPartsCount {
 		req := url.Values{
 			"partNumber": {strconv.Itoa(idx + 1)},
 			"uploadId":   {uploadID},
 		}
-		url, err := s.s3Core.Presign(
+
+		headers := http.Header{}
+
+		if len(checksums) != 0 {
+			// checksums is a slice of base64 strings
+			headers.Add("x-amz-checksum-sha256", checksums[idx])
+		}
+
+		presignedURL, err := s.s3Core.PresignHeader(
 			ctx,
 			http.MethodPut,
 			bucketName,
 			objectKey,
 			s.preginedURLsDuration,
 			req,
+			headers,
 		)
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -139,7 +176,7 @@ func (s *service) GetPresignedMultipartPartsURLs(
 				apperrors.NewErrInternal().WithCause(err),
 			)
 		}
-		presignedURLs = append(presignedURLs, url.String())
+		presignedURLs = append(presignedURLs, presignedURL.String())
 	}
 
 	return presignedURLs, nil
@@ -150,7 +187,7 @@ func (s *service) CompleteMultipartUpload(
 	bucketName string,
 	objectKey string,
 	uploadID string,
-	ETags []minio.CompletePart,
+	parts []CompletedPart,
 	opts PutOptions,
 ) error {
 
@@ -164,7 +201,7 @@ func (s *service) CompleteMultipartUpload(
 		bucketName,
 		objectKey,
 		uploadID,
-		ETags,
+		toMinioCompletePart(parts...),
 		minioOpts,
 	)
 	if err != nil {
