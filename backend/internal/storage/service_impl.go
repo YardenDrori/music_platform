@@ -205,14 +205,6 @@ func (s *service) CompleteMultipartUpload(
 		minioOpts,
 	)
 	if err != nil {
-		anotherErr := s.AbortMultipartUpload(context.Background(), bucketName, objectKey, uploadID)
-		if anotherErr != nil {
-			return fmt.Errorf(
-				"completing presgined multipart upload: %w %w",
-				apperrors.NewErrInternal().WithCause(err),
-				apperrors.NewErrInternal().WithCause(anotherErr),
-			)
-		}
 		return fmt.Errorf(
 			"completing presgined multipart upload: %w",
 			apperrors.NewErrInternal().WithCause(err),
