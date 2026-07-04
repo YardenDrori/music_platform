@@ -121,7 +121,7 @@ func (s *service) processArtistEntity(artist *Artist) {
 	}
 	if artist.ArtistBannerUrl != nil {
 		artist.ArtistBannerUrl = s.storage.BuildPublicGetUrl(
-			constants.BannerBucket,
+			constants.BannerArtBucket,
 			*artist.ArtistBannerUrl,
 		)
 	}
@@ -220,7 +220,7 @@ func (s *service) HardDeleteArtist(ctx context.Context, id uuid.UUID) error {
 	if oldArtist.ArtistBannerUrl != nil {
 		err := s.storage.DeleteObject(
 			ctx,
-			constants.BannerBucket,
+			constants.BannerArtBucket,
 			*oldArtist.ArtistBannerUrl,
 			storage.DeleteOptions{},
 		)
@@ -274,8 +274,8 @@ func (s *service) UploadArtistProfilePicture(
 
 	objectKey := uuid.New()
 	storageOpts := storage.PutOptions{
-		ContentType:    contentType,
-		SendContentMD5: false,
+		ContentType: contentType,
+		//TODO
 	}
 
 	if err := s.storage.PutObject(
@@ -366,13 +366,13 @@ func (s *service) UploadArtistBannerPicture(
 
 	objectKey := uuid.New()
 	storageOpts := storage.PutOptions{
-		ContentType:    contentType,
-		SendContentMD5: false,
+		ContentType: contentType,
+		//TODO
 	}
 
 	if err := s.storage.PutObject(
 		ctx,
-		constants.BannerBucket,
+		constants.BannerArtBucket,
 		objectKey.String(),
 		reader,
 		reader.Size(),
@@ -388,7 +388,7 @@ func (s *service) UploadArtistBannerPicture(
 	if err != nil {
 		if errObj := s.storage.DeleteObject(
 			context.Background(),
-			constants.BannerBucket,
+			constants.BannerArtBucket,
 			objectKey.String(),
 			storage.DeleteOptions{},
 		); errObj != nil {
@@ -404,7 +404,7 @@ func (s *service) UploadArtistBannerPicture(
 	if oldArtist.ArtistBannerUrl != nil {
 		err := s.storage.DeleteObject(
 			ctx,
-			constants.BannerBucket,
+			constants.BannerArtBucket,
 			*oldArtist.ArtistBannerUrl,
 			storage.DeleteOptions{},
 		)
