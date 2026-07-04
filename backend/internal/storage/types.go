@@ -23,6 +23,6 @@ type DeleteOptions struct {
 type CompletedPart struct {
 	PartNumber    int
 	ETag          string
-	ChecksumValue string
+	ChecksumValue *string
 	ChecksumAlgo  ChecksumAlgo
 }

@@ -58,7 +58,7 @@ func toMinioCompletePart(p ...CompletedPart) []minio.CompletePart {
 		}
 		switch part.ChecksumAlgo {
 		case ChecksumSha256:
-			minioPart.ChecksumSHA256 = part.ChecksumValue
+			minioPart.ChecksumSHA256 = *part.ChecksumValue
 		}
 		parts = append(parts, minioPart)
 	}
