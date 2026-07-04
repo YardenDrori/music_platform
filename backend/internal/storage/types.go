@@ -7,6 +7,7 @@ const (
 	ChecksumSha256 ChecksumAlgo = "sha256"
 )
 
+// ==========options==========
 type PutOptions struct {
 	ContentType string
 	Checksum    ChecksumAlgo
@@ -18,6 +19,7 @@ type DeleteOptions struct {
 	VersionID        string
 }
 
+// ==========models/DTOs==========
 type CompletedPart struct {
 	PartNumber    int
 	ETag          string
