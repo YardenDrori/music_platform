@@ -27,4 +27,5 @@ type repository interface {
 	) error
 }
 
-type Service interface
+type Service interface {
+}
