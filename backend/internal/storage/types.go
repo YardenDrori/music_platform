@@ -26,3 +26,9 @@ type CompletedPart struct {
 	ChecksumValue *string
 	ChecksumAlgo  ChecksumAlgo
 }
+
+type CompletedPartDTO struct {
+	PartNumber    int     `json:"partNumber"`
+	ETag          string  `json:"eTag"`
+	ChecksumValue *string `json:"checksumValue"`
+}
