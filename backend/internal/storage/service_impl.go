@@ -128,7 +128,7 @@ func (s *service) InitiateMultipartUpload(
 	return uploadID, nil
 }
 
-func (s *service) GetPresignedMultipartPartsURLs(
+func (s *service) PresignMultipartUploadPutURLs(
 	ctx context.Context,
 	bucketName string,
 	objectKey string,
@@ -136,7 +136,6 @@ func (s *service) GetPresignedMultipartPartsURLs(
 	totalPartsCount int,
 	checksums ...string,
 ) ([]string, error) {
-
 	if len(checksums) != 0 && len(checksums) != totalPartsCount {
 		panic(
 			fmt.Sprintf(

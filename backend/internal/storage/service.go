@@ -19,7 +19,7 @@ type Service interface {
 
 	//errors:
 	//fmt
-	GetPresignedMultipartPartsURLs(
+	PresignMultipartUploadPutURLs(
 		ctx context.Context,
 		bucketName string,
 		objectKey string,
