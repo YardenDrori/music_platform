@@ -107,6 +107,26 @@ func (s *service) PutObject(
 	return nil
 }
 
+func (s *service) GetObjectStream(
+	ctx context.Context,
+	bucketName string,
+	objectKey string,
+) (io.ReadSeekCloser, error) {
+	object, err := s.s3Core.Client.GetObject(ctx, bucketName, objectKey, minio.GetObjectOptions{})
+	if err != nil {
+		errResp := minio.ToErrorResponse(err)
+		switch errResp.Code {
+		case "NoSuchKey":
+			return nil, fmt.Errorf(
+				"fetching object stream: %w",
+				apperrors.NewErrNotFound("object not found"),
+			)
+		}
+		return nil, apperrors.NewErrInternal().WithCause(err)
+	}
+	return object, nil
+}
+
 func (s *service) InitiateMultipartUpload(
 	ctx context.Context,
 	bucketName string,

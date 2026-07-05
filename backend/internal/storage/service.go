@@ -65,6 +65,12 @@ type Service interface {
 		opts PutOptions,
 	) error
 
+	GetObjectStream(
+		ctx context.Context,
+		bucketName string,
+		objectKey string,
+	) (io.ReadSeekCloser, error)
+
 	BuildPublicGetUrl(bucketName string, objectKey string) *string
 
 	DeleteObject(
