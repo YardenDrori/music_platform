@@ -170,6 +170,13 @@ func (s *service) PresignMultipartUploadPutURLs(
 			headers,
 		)
 		if err != nil {
+			errResp := minio.ToErrorResponse(err)
+			if errResp.Code == "NoSuchUpload" {
+				return nil, fmt.Errorf(
+					"generating presigned multipart URLs: %w",
+					apperrors.NewErrNotFound("upload id doesnt exist"),
+				)
+			}
 			return nil, fmt.Errorf(
 				"generating presigned multipart upload URLs: %w",
 				apperrors.NewErrInternal().WithCause(err),
@@ -204,6 +211,13 @@ func (s *service) CompleteMultipartUpload(
 		minioOpts,
 	)
 	if err != nil {
+		errResp := minio.ToErrorResponse(err)
+		if errResp.Code == "NoSuchUpload" {
+			return fmt.Errorf(
+				"completing presgined multipart upload: %w",
+				apperrors.NewErrNotFound("upload id doesnt exist"),
+			)
+		}
 		return fmt.Errorf(
 			"completing presgined multipart upload: %w",
 			apperrors.NewErrInternal().WithCause(err),
