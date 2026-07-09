@@ -68,15 +68,16 @@ func validateAccountBusinessRules(user *User) error {
 func (s *service) NewAccount(ctx context.Context, user *NewUserRequest) (*User, error) {
 	passHash := s.passwordHasher.hashPassword(user.Password)
 	newUser := &User{
-		ID:           user.ID,
-		Email:        user.Email,
-		Username:     user.Username,
-		FirstName:    user.FirstName,
-		LastName:     user.LastName,
-		PasswordHash: passHash,
-		CreatedAt:    time.Now().UTC(),
-		LastUpdated:  time.Now().UTC(),
-		Active:       true,
+		ID:            user.ID,
+		Email:         user.Email,
+		Username:      user.Username,
+		FirstName:     user.FirstName,
+		LastName:      user.LastName,
+		ProfilePicKey: nil,
+		PasswordHash:  passHash,
+		CreatedAt:     time.Now().UTC(),
+		LastUpdated:   time.Now().UTC(),
+		DeletedAt:     nil,
 	}
 
 	if err := validateAccountBusinessRules(newUser); err != nil {
@@ -162,46 +163,46 @@ func (s *service) FindByUUIDPublic(ctx context.Context, id uuid.UUID) (*User, er
 // ErrUnathenticated
 // errorf
 func (s *service) UpdateAccount(ctx context.Context, user *NewUserRequest) error {
-	if err := requireSelf(ctx, user.ID); err != nil {
-		return err
-	}
-
-	currUserInfo, err := s.repo.FindByID(ctx, user.ID)
-	if err != nil {
-		return fmt.Errorf("updating user profile: fetching account info: %w", err)
-	}
-
-	passwordsMatch, err := s.passwordHasher.verifyPassword(user.Password, currUserInfo.PasswordHash)
-	if err != nil {
-		return fmt.Errorf("updating user profile: checking if passwords match: %w", err)
-	}
-
-	var newPass string
-	if passwordsMatch {
-		newPass = currUserInfo.PasswordHash
-	} else {
-		newPass = s.passwordHasher.hashPassword(user.Password)
-	}
-
-	updatedUser := &User{
-		ID:           user.ID,
-		Username:     user.Username,
-		FirstName:    user.FirstName,
-		LastName:     user.LastName,
-		PasswordHash: newPass,
-		CreatedAt:    currUserInfo.CreatedAt,
-		Active:       currUserInfo.Active,
-	}
-
-	if err := validateAccountBusinessRules(updatedUser); err != nil {
-		return err
-	}
-
-	err = s.repo.Update(ctx, updatedUser)
-	if err != nil {
-		return fmt.Errorf("updating user account: %w", err)
-	}
-
+	// if err := requireSelf(ctx, user.ID); err != nil {
+	// 	return err
+	// }
+	//
+	// currUserInfo, err := s.repo.FindByID(ctx, user.ID)
+	// if err != nil {
+	// 	return fmt.Errorf("updating user profile: fetching account info: %w", err)
+	// }
+	//
+	// passwordsMatch, err := s.passwordHasher.verifyPassword(user.Password, currUserInfo.PasswordHash)
+	// if err != nil {
+	// 	return fmt.Errorf("updating user profile: checking if passwords match: %w", err)
+	// }
+	//
+	// var newPass string
+	// if passwordsMatch {
+	// 	newPass = currUserInfo.PasswordHash
+	// } else {
+	// 	newPass = s.passwordHasher.hashPassword(user.Password)
+	// }
+	//
+	// updatedUser := &User{
+	// 	ID:           user.ID,
+	// 	Username:     user.Username,
+	// 	FirstName:    user.FirstName,
+	// 	LastName:     user.LastName,
+	// 	PasswordHash: newPass,
+	// 	CreatedAt:    currUserInfo.CreatedAt,
+	// 	Active:       currUserInfo.Active,
+	// }
+	//
+	// if err := validateAccountBusinessRules(updatedUser); err != nil {
+	// 	return err
+	// }
+	//
+	// err = s.repo.Update(ctx, updatedUser)
+	// if err != nil {
+	// 	return fmt.Errorf("updating user account: %w", err)
+	// }
+	//
 	return nil
 }
 
@@ -233,7 +234,8 @@ func (s *service) DeactivateAccount(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("fetching account for deactivation: %w", err)
 	}
 
-	user.Active = false
+	now := time.Now().UTC()
+	user.DeletedAt = &now
 
 	err = s.repo.Update(ctx, user)
 	if err != nil {

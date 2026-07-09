@@ -16,7 +16,7 @@ type User struct {
 	PasswordHash  string
 	CreatedAt     time.Time
 	LastUpdated   time.Time
-	// Active        bool
+	DeletedAt     *time.Time
 }
 
 type NewUserRequest struct {
