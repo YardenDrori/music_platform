@@ -9,6 +9,7 @@ import "C"
 
 //go:generate go tool cgo -exportheader=cgo_export.h duration.go
 //go:generate mv _obj/_cgo_export.h ./
+//go:generate rm -f cgo_export.h
 //go:generate rm -rf _obj _cgo_2.o _cgo_4.o
 
 //to use run "go generate ./..."
